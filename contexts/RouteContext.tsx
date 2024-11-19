@@ -1,16 +1,20 @@
 import React, { createContext, useContext } from 'react';
 import { useRouter } from 'expo-router';
-import { Routes } from '@/enums/Routes';
+import { Routes } from '@/app/(screens)/Routes';
 
 const RouteContext = createContext({
-  routeTo: (route: Routes) => {},
+  routeTo: (route: Routes, props?: Record<string, any>) => {},
 });
 
 export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
-  const routeTo = (route: Routes) => {
-    const routeString = `/${route}`;
+  const routeTo = (route: Routes, props?: Record<string, any>) => {
+    let routeString = `/${route}`;
+    if (props) {
+      const queryString = new URLSearchParams(props).toString();
+      routeString += `?${queryString}`;
+    }
     router.push(routeString as import('expo-router').RelativePathString);
   };
 

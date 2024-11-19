@@ -1,16 +1,21 @@
 import React from "react";
-import { Button, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { StyleProp, StyleSheet, Text, TouchableOpacity, ViewStyle } from "react-native";
 
 interface GeneralButtonProps {
   title: string;
   onPress: () => void;
   disabled?: boolean;
+  autoWidth?: boolean;
 }
 
-export default function GeneralButton({ title, onPress, disabled=false }: GeneralButtonProps) {
+export function GeneralButton({ title, onPress, disabled=false, autoWidth=true }: GeneralButtonProps) {
   return (
     <TouchableOpacity
-      style={[styles.generalButton, disabled && styles.disabled]}
+      style={[
+        styles.generalButton, 
+        disabled && styles.disabled, 
+        !autoWidth && { width: '100%' }
+      ]}
       onPress={onPress}
       disabled={disabled}
     >
@@ -31,7 +36,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 20,
   },
   disabled: {
     backgroundColor: '#cccccc',

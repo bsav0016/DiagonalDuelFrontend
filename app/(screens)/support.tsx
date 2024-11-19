@@ -1,18 +1,18 @@
 import React from "react";
 import { StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
+import { CustomHeaderView } from "@/components/CustomHeaderView";
 
 export default function Support () {
-    const router = useRouter();
-
     return (
-        <ThemedView style={styles.playComputerView}>
-            <ThemedText>
-                Play computer
-            </ThemedText>
-        </ThemedView>
+        <CustomHeaderView header="Support">
+            <ThemedView style={styles.playComputerView}>
+                <ThemedText>
+                    Play computer
+                </ThemedText>
+            </ThemedView>
+        </CustomHeaderView>
     )
 }
 

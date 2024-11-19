@@ -1,6 +1,7 @@
 export enum Routes {
-    Homepage = 'homepage',
+    HomeScreen = 'homescreen',
     PlayComputer = 'play-computer',
     PlayOnline = 'play-online',
     Support = 'support',
+    Game = 'game-screen'
 }
