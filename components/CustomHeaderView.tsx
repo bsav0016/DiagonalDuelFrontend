@@ -68,19 +68,19 @@ const styles = StyleSheet.create({
     backButton: {
         position: 'absolute',
         left: 10,
-        top: 5,
+        top: 10,
         backgroundColor: Colors.button.background,
         flexDirection: "row",
         justifyContent: "center",
         alignItems: "center",
         width: 'auto',
-        height: 50,
+        height: 40,
         paddingRight: 5,
         borderRadius: 5
     },
 
     backText: {
-        fontSize: fontSize,
+        fontSize: 14,
         color: Colors.button.text
     },
 

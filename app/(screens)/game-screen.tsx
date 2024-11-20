@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
@@ -9,8 +9,11 @@ import { useToast } from "@/contexts/ToastContext";
 import { Routes } from "./Routes";
 import { GameBoard } from "@/features/game/components/GameBoard";
 import { StyleSheet } from "react-native";
-import { validateMove } from "@/features/game/gameUtils";
+import { checkWinner, computerMove, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove } from "@/features/game/gameUtils";
 import { GeneralButton } from "@/components/GeneralButton";
+import { Move } from "@/features/game/models/Move";
+import { GameType } from "@/features/game/models/GameType";
+import { Player } from "@/features/game/models/Player";
 
 
 export default function GameScreen () {
@@ -29,19 +32,53 @@ export default function GameScreen () {
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
     const [header, setHeader] = useState<string>(`${gameInstance.player1.username}'s Turn`);
     const [gameArray, setGameArray] = useState<number[][]>(gameInstance.initializeGameArray());
-    const [selectedRow, setSelectedRow] = useState<number | null>(null);
-    const [selectedCol, setSelectedCol] = useState<number | null>(null);
-    const [lastRow, setLastRow] = useState<number | null>(
-        gameInstance.moves.length > 0 ? gameInstance.moves[gameInstance.moves.length - 1].row : null
+    const [selectedMove, setSelectedMove] = useState<Move | null>(null);
+    const [lastMove, setLastMove] = useState<Move | null>(
+        gameInstance.moves.length > 0 ? gameInstance.moves[gameInstance.moves.length - 1] : null
     );
-    const [lastCol, setLastCol] = useState<number | null>(
-        gameInstance.moves.length > 0 ? gameInstance.moves[gameInstance.moves.length - 1].column : null
+    const [lastUpdated, setLastUpdated] = useState<Date>(
+        gameInstance.lastUpdated ? gameInstance.lastUpdated : new Date()
     );
+    const [time, setTime] = useState<number | null>(null);
     const [displayConfirm, setDisplayConfirm] = useState<Boolean>(false);
 
-    const updateGameArray = (row: number, col: number, val: number) => {
+    useEffect(() => {
+        if (gameInstance.isComputerTurn()) {
+            const computerPlayer = gameInstance.computerPlayer()
+            if (!computerPlayer) {
+                addToast('Computer has given up!');
+                return;
+            }
+            computerTurn(computerPlayer);
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!lastUpdated || !gameInstance.moveTime) return;
+
+        const currentTime = new Date().getTime();
+        const lastUpdatedTime = new Date(lastUpdated).getTime();
+        const initialTime = currentTime - lastUpdatedTime - gameInstance.moveTime;
+
+        setTime(Math.max(0, initialTime));
+
+        const interval = setInterval(() => {
+            setTime(prevTime => {
+                if (prevTime === null || prevTime <= 0) {
+                    clearInterval(interval);
+                    return null;
+                }
+                return prevTime - 1000;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+
+    }, [lastUpdated]);
+
+    const updateGameArray = (move: Move, val: number) => {
         const updatedGameArray = [...gameArray];
-        updatedGameArray[row][col] = val;
+        updatedGameArray[move.row][move.column] = val;
         setGameArray(updatedGameArray);
     }
 
@@ -53,62 +90,113 @@ export default function GameScreen () {
             return;
         }
         const currentPlayer = gameInstance.playerTurn();
-        updateGameArray(row, col, currentPlayer === gameInstance.player1 ? 1 : 2);
-        setSelectedRow(row);
-        setSelectedCol(col);
+        const move = new Move(currentPlayer, row, col);
+        updateGameArray(move, currentPlayer === gameInstance.player1 ? 1 : 2);
+        setSelectedMove(move);
         setDisplayConfirm(true);
     };
 
-    const executeMove = () => {
-        if (selectedRow === null || selectedCol === null) {
-            addToast('Internal error occurred');
-            console.error('Row or column not set');
+    const computerTurn = (computerPlayer: Player) => {
+        console.log("Here")
+        const move: Move | null = computerMove(gameArray, computerPlayer);
+        console.log(move);
+        if (!move) {
+            addToast('Computer did not find a valid move!');
             return;
         }
-        const currentPlayer = gameInstance.playerTurn();        
+        console.log(move)
+        setSelectedMove(move);
+        updateGameArray(move, computerPlayer === gameInstance.player1 ? 1 : 2);
+        executeMove(move.row, move.column);
+    }
+
+    const executeMove = (row: number, col: number) => {
+        const currentPlayer = gameInstance.playerTurn();
         
-        const newGameInstance = new Game (
+        let newGameInstance = new Game (
             gameInstance.gameType,
             gameInstance.player1,
             gameInstance.player2,
-            [...gameInstance.moves]
-        )
-        newGameInstance.addMove(currentPlayer, selectedRow, selectedCol)
-        setGameInstance(newGameInstance);        
+            [...gameInstance.moves],
+            lastUpdated
+        );
+        newGameInstance.addMove(currentPlayer, row, col);       
     
-        if (newGameInstance.determineWinner()) {
-            setHeader(`${currentPlayer.username} Wins!`);
+        if (checkWinner(gameArray)) {
+            const winner: string = `${currentPlayer.username} Wins!`
+            setHeader(winner);
+            newGameInstance.winner = winner
         } else {
             setHeader(
                 `${newGameInstance.playerTurn().username}'s Turn`
             );
         }
-        setLastRow(selectedRow);
-        setLastCol(selectedCol);
+        setGameInstance(newGameInstance); 
+        setLastMove(selectedMove);
         resetSelectedButton();
+        updateAvailableMoves(true);
+        if (newGameInstance.isComputerTurn()) {
+            const computerPlayer = newGameInstance.computerPlayer();
+            if (!computerPlayer) {
+                addToast('Computer player has left the game');
+                return;
+            }
+            computerTurn(computerPlayer);
+        }
     }
 
     const resetSelectedButton = () => {
         setDisplayConfirm(false);
-        setSelectedRow(null);
-        setSelectedCol(null);
+        setSelectedMove(null);
     }
 
     const unselectedButton = () => {
-        if (selectedRow !== null && selectedCol !== null) {
-            updateGameArray(selectedRow, selectedCol, 0);
+        if (selectedMove !== null) {
+            updateGameArray(selectedMove, 0);
         }
+    }
+
+    const updateAvailableMoves = (hide: Boolean) => {
+        const newGameArray: number[][] = hide ? hideValidMoves(gameArray) : getAllValidMoves(gameArray);
+        setGameArray(newGameArray);
+    }
+
+    const resetBoard = gameInstance.gameType === GameType.Online ? null : () => {
+        addToast('Confirm Reset?', () => {
+            const newGameArray: number[][] = [];
+            for (let i = 0; i < 8; i++) {
+                newGameArray[i] = new Array(8).fill(0);
+            }
+            setGameArray(newGameArray);
+            setLastMove(null);
+            resetSelectedButton();
+            const newGameInstance = resetGameInstance(gameInstance);
+            setGameInstance(newGameInstance);
+            setHeader(`${newGameInstance.player1.username}'s Turn`);
+        });
     }
 
     return (
         <CustomHeaderView header={header}>
             <ThemedView style={styles.gameBoard}>
+                <ThemedView style={styles.winnerView}>
+                    { (!gameInstance.winner && !selectedMove) ?
+                    (
+                        gameArray.some(row => row.includes(3)) ?
+                        <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(true)} />
+                        :
+                        <GeneralButton title='Show Valid Moves' onPress={() => updateAvailableMoves(false)} />
+                    ) :
+                    null
+                    }
+                </ThemedView>
+
                 <GameBoard 
                     gameArray={gameArray}
-                    selectedRow={selectedRow}
-                    selectedCol={selectedCol}
-                    lastRow={lastRow}
-                    lastCol={lastCol}
+                    selectedMove={selectedMove}
+                    lastMove={lastMove}
+                    time={gameInstance.gameType === GameType.Online ? time : null}
+                    resetClicked={resetBoard}
                     disabled={ gameInstance.isComputerTurn() || !!gameInstance.winner }
                     onCellClick={handleCellClick} 
                 />
@@ -118,7 +206,17 @@ export default function GameScreen () {
                 <ThemedText style={styles.confirmText}>
                     Confirm Move?
                 </ThemedText>
-                <GeneralButton title="Yes" onPress={() => executeMove()} />
+                <GeneralButton 
+                    title="Yes" 
+                    onPress={() => {
+                        if (!selectedMove) {
+                            addToast('Internal error occurred');
+                            console.error('Selected move not set before confirm move');
+                            return;
+                        }
+                        executeMove(selectedMove.row, selectedMove.column)
+                    }} 
+                />
                 <GeneralButton title="No" onPress={() => {resetSelectedButton(), unselectedButton()}} />
             </ThemedView>
             }
@@ -130,6 +228,10 @@ const styles = StyleSheet.create({
     gameBoard: {
         alignItems: 'center',
         justifyContent: 'center'
+    },
+
+    winnerView: {
+        height: 50,
     },
 
     confirmView: {

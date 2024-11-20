@@ -7,38 +7,48 @@ export class Game {
     player1: Player;
     player2: Player;
     moves: Move[];
-    winner?: string | null;
+    lastUpdated: Date | null;
+    moveTime: number | null;
+    winner: string | null;
 
-    constructor(gameType: GameType, player1: Player, player2: Player, moves: Move[] = []) {
+    constructor(
+        gameType: GameType, 
+        player1: Player, 
+        player2: Player, 
+        moves: Move[] = [], 
+        lastUpdated: Date | null = null,
+        moveTime: number | null = null,
+        winner: string | null = null
+    ) {
         this.gameType = gameType;
         this.player1 = player1;
         this.player2 = player2;
         this.moves = moves;
-        this.winner = null;
+        this.lastUpdated = lastUpdated;
+        this.moveTime = moveTime;
+        this.winner = winner;
     }
 
     static fromParams(params: any): Game {
-        const { gameType, player1, player2, moves, winner } = params;
+        const { gameType, player1, player2, moves, lastUpdated, moveTime, winner } = params;
         const reconstructedPlayer1 = new Player(player1.username, player1.computerLevel);
         const reconstructedPlayer2 = new Player(player2.username, player2.computerLevel);
         const reconstructedMoves = moves ? moves.map((m: any) => new Move(m.player, m.row, m.column)) : [];
-        const game = new Game(gameType, reconstructedPlayer1, reconstructedPlayer2, reconstructedMoves);
-        game.winner = winner ?? null;
+        const game = new Game(
+            gameType, 
+            reconstructedPlayer1, 
+            reconstructedPlayer2, 
+            reconstructedMoves, 
+            lastUpdated,
+            moveTime,
+            winner
+        );
         return game;
     }
-  
-    addMove(player: Player, row: number, column: number) {
-        const move: Move = new Move(player, row, column);
-        this.moves.push(move);
-    }
-  
-    determineWinner() {
-        // Logic to determine winner goes here
-        // For now, just setting a placeholder
-        if (false) {
-            this.winner = Math.random() > 0.5 ? this.player1.username : this.player2.username;
-        }
-        return this.winner
+
+    addMove(player: Player, row: number, col: number) {
+        const move = new Move(player, row, col);
+        this.moves.push(move)
     }
 
     playerTurn() {
@@ -50,10 +60,22 @@ export class Game {
     }
 
     isComputerTurn() {
-        if (this.playerTurn().computerLevel) {
+        if (this.playerTurn().computerLevel !== null) {
             return true;
         } else {
             return false;
+        }
+    }
+
+    computerPlayer() {
+        if (this.player1.computerLevel !== null) {
+            return this.player1;
+        }
+        else if (this.player2.computerLevel !== null) {
+            return this.player2;
+        }
+        else {
+            return null;
         }
     }
 

@@ -6,9 +6,10 @@ interface GeneralButtonProps {
   onPress: () => void;
   disabled?: boolean;
   autoWidth?: boolean;
+  fontSize?: number;
 }
 
-export function GeneralButton({ title, onPress, disabled=false, autoWidth=true }: GeneralButtonProps) {
+export function GeneralButton({ title, onPress, disabled=false, autoWidth=true, fontSize=20 }: GeneralButtonProps) {
   return (
     <TouchableOpacity
       style={[
@@ -19,7 +20,7 @@ export function GeneralButton({ title, onPress, disabled=false, autoWidth=true }
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={styles.buttonText}>{title}</Text>
+      <Text style={[styles.buttonText, { fontSize: fontSize }]}>{title}</Text>
     </TouchableOpacity>
   );
 }
@@ -37,6 +38,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 20,
+    textAlign: 'center'
   },
   disabled: {
     backgroundColor: '#cccccc',
