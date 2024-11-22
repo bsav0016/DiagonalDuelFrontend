@@ -1,12 +1,13 @@
 const DEV_ENV: Boolean = true
 
-export const DB_URL: string = DEV_ENV 
-    ? "http://127.0.0.1:8000/"
+let URL: string = DEV_ENV 
+    ? "http://192.168.1.12:8000/"
     : "''"
+export const DB_URL = URL + "api/"
 
 export const ACCEPTABLE_STATUS_CODES: number[] = [200, 201]
 
-export const HEADERS = (token?: string) => {
+export const HEADERS = (token: string | null = null) => {
     return {
         JSON: {'Content-Type': 'application/json'},
         AUTH: {'Authorization': `Token ${token}`}

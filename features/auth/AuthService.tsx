@@ -1,12 +1,18 @@
 import { RequestMethod } from "@/lib/networkRequests/RequestMethod";
-import { LoginDTO } from "@/features/auth/LoginDTO";
+import { LoginDTO } from "@/features/auth/dtos/LoginDTO";
 import { HEADERS, URL_EXT } from "@/lib/networkRequests/NetworkConstants";
-import { NetworkError } from "@/lib/networkRequests/NetworkError";
 import { networkRequest } from "@/lib/networkRequests/NetworkRequest";
+import { LoginResponseDTO } from "./dtos/LoginResponseDTO";
+import { AuthFields } from "./AuthFields";
+import { AuthType } from "./AuthType";
+import { RegisterDTO } from "./dtos/RegisterDTO";
+import { RegisterResponseDTO } from "./dtos/RegisterResponseDTO";
+import { User } from "./User";
 
 
 export const AuthService = {
-    async login(loginDTO: LoginDTO) {
+    async auth(fields: AuthFields, type: AuthType): Promise<User> {
+        const body = type === AuthType.Login ? (new LoginDTO(fields)).jsonify() : (new RegisterDTO(fields)).jsonify()
         const headers = {
             ...HEADERS().JSON
         }
@@ -15,14 +21,17 @@ export const AuthService = {
                 URL_EXT.LOGIN, 
                 RequestMethod.POST, 
                 headers, 
-                loginDTO.jsonify()
+                body
             )
-            const token = data.token
-            if (!token) {
-                throw new NetworkError("Token not provided in response", data?.status, data);
+            if (type === AuthType.Login) {
+                const loginResponse: LoginResponseDTO = new LoginResponseDTO(data);
+                return loginResponse.user
+            } else {
+                const registerResponse: RegisterResponseDTO = new RegisterResponseDTO(data);
+                return registerResponse.user
             }
-            return token
         } catch (error) {
+            console.error("Authservice", error);
             throw(error);
         }
     },

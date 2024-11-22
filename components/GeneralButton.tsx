@@ -1,3 +1,4 @@
+import { Colors } from "@/constants/Colors";
 import React from "react";
 import { StyleProp, StyleSheet, Text, TouchableOpacity, ViewStyle } from "react-native";
 
@@ -14,6 +15,7 @@ export function GeneralButton({ title, onPress, disabled=false, autoWidth=true, 
     <TouchableOpacity
       style={[
         styles.generalButton, 
+        { backgroundColor: Colors.button.background },
         disabled && styles.disabled, 
         !autoWidth && { width: '100%' }
       ]}
@@ -29,7 +31,6 @@ const styles = StyleSheet.create({
   generalButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
-    backgroundColor: '#007bff',
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',

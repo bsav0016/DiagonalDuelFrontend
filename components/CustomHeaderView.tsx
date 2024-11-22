@@ -11,6 +11,7 @@ interface CustomHeaderProps {
     header: string;
     children: ReactNode;
     canGoBack?: Boolean;
+    goBack?: () => void,
     style?: StyleProp<ViewStyle>;
 }
 
@@ -18,15 +19,12 @@ export function CustomHeaderView({
     header, 
     children, 
     canGoBack=true,
+    goBack,
     style
 }: CustomHeaderProps) {
     const router = useRouter();
 
-    const handleBackPress = () => {
-        if (canGoBack) {
-            router.back();
-        }
-    };
+    const handleBackPress = goBack || router.back
 
     return (
         <ThemedView style={[styles.screenView, style]}>

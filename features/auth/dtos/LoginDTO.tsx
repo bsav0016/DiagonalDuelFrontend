@@ -1,10 +1,12 @@
+import { AuthFields } from "../AuthFields";
+
 export class LoginDTO {
     username: string;
     password: string;
 
-    constructor(username: string, password: string) {
-        this.username = username
-        this.password = password
+    constructor(fields: AuthFields) {
+        this.username = fields.username
+        this.password = fields.password
     }
 
     jsonify() {

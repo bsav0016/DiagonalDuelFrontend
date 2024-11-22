@@ -1,17 +1,16 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { AuthService } from '@/features/auth/AuthService';
-import { LoginDTO } from '@/features/auth/LoginDTO';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NetworkError } from '@/lib/networkRequests/NetworkError';
+import { User } from '@/features/auth/User';
+import { AuthFields } from './AuthFields';
+import { AuthType } from './AuthType';
 
-interface User {
-  username: string;
-  token: string;
-}
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (loginDTO: LoginDTO) => void;
+  auth: (fields: AuthFields, type: AuthType) => Promise<void>;
   logout: () => void;
 }
 
@@ -37,16 +36,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setStoredUser();
   }, []);
 
-  const login = async (loginDTO: LoginDTO) => {
+  const auth = async (fields: AuthFields, type: AuthType): Promise<void> => {
     try {
-        let token = await AuthService.login(loginDTO);
-        const user: User = { username: loginDTO.username, token: token }
-        setUser(user);
-        setIsAuthenticated(true);
-        AsyncStorage.setItem('user', JSON.stringify(user));
-        return true;
+      const authUser = await AuthService.auth(fields, type);
+      setUser(authUser);
+      setIsAuthenticated(true);
+      AsyncStorage.setItem('user', JSON.stringify(authUser));
     } catch (error) {
-        throw(error);
+      if (error instanceof NetworkError) {
+        if (error.status == 403) {
+          throw new Error('Invalid username and password')
+        }
+      }
+      throw new Error('Network error');
     }
   };
 
@@ -54,20 +56,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userToken = user?.token
       if (!userToken) {
-        return false
+        return;
       }
       await AuthService.logout(userToken);
       setUser(null);
       setIsAuthenticated(false);
       AsyncStorage.removeItem('user');
-      return true;
     } catch (error) {
       throw(error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, auth, logout }}>
       {children}
     </AuthContext.Provider>
   );
