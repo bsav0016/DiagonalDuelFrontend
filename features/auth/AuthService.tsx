@@ -8,30 +8,41 @@ import { AuthType } from "./AuthType";
 import { RegisterDTO } from "./dtos/RegisterDTO";
 import { RegisterResponseDTO } from "./dtos/RegisterResponseDTO";
 import { User } from "./User";
+import { NetworkError } from "@/lib/networkRequests/NetworkError";
 
+interface AuthResponseFields {
+    user: User;
+    refresh: string;
+    access: string;
+}
 
 export const AuthService = {
-    async auth(fields: AuthFields, type: AuthType): Promise<User> {
+    async auth(fields: AuthFields, type: AuthType): Promise<AuthResponseFields> {
         const body = type === AuthType.Login ? (new LoginDTO(fields)).jsonify() : (new RegisterDTO(fields)).jsonify()
         const headers = {
             ...HEADERS().JSON
         }
         try {
-            const data = await networkRequest(
+            const response = await networkRequest(
                 URL_EXT.LOGIN, 
                 RequestMethod.POST, 
                 headers, 
                 body
             )
+            const data = response.data
+            if (!data.refresh_token || !data.access_token) {
+                throw new NetworkError("Tokens not provided");
+            }
+            let user: User;
             if (type === AuthType.Login) {
                 const loginResponse: LoginResponseDTO = new LoginResponseDTO(data);
-                return loginResponse.user
+                user = loginResponse.user
             } else {
                 const registerResponse: RegisterResponseDTO = new RegisterResponseDTO(data);
-                return registerResponse.user
+                user = registerResponse.user
             }
+            return { user: user, refresh: data.refresh_token, access: data.access_token }
         } catch (error) {
-            console.error("Authservice", error);
             throw(error);
         }
     },
@@ -41,7 +52,11 @@ export const AuthService = {
             const headers = {
                 ...HEADERS(token).AUTH
             }
-            await networkRequest(URL_EXT.LOGOUT, RequestMethod.POST, headers);
+            await networkRequest(
+                URL_EXT.LOGOUT, 
+                RequestMethod.POST, 
+                headers
+            );
             return true;
         } catch (error) {
             console.error("Error during logout:", error);

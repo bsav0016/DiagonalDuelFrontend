@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { Modal } from 'react-native';
 
 interface LoadingContextType {
     setLoading: (loading: boolean) => void;
@@ -12,11 +13,10 @@ export const LoadingProvider: React.FC<{ children: ReactNode }> = ({ children })
 
     return (
         <LoadingContext.Provider value={{ setLoading }}>
-            {loading?
-            <LoadingScreen/>
-            :
-            children
-            }
+            {children}
+            {loading && (
+                <LoadingScreen />
+            )}
         </LoadingContext.Provider>
     );
 };

@@ -15,14 +15,13 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
-export const toastRef = React.useRef<(message: string, okCallback?: (() => void) | null) => void>();
-
 interface ToastProviderProps {
   children: ReactNode;
 }
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastRef = React.useRef<(message: string, okCallback?: (() => void) | null) => void>();
 
   const addToast = useCallback((message: string, okCallback: (() => void) | null = null) => {
     const id = Date.now();
@@ -88,7 +87,7 @@ const styles = StyleSheet.create({
     left: '50%',
     transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
     zIndex: 9999,
-    maxWidth: '50%',
+    maxWidth: '80%',
     width: 'auto',
     borderWidth: 1,
     borderColor: 'black',

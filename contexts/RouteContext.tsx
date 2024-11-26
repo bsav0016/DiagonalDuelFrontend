@@ -1,13 +1,14 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
 import { Routes } from '@/app/(screens)/Routes';
 
 const RouteContext = createContext({
   routeTo: (route: Routes, props?: Record<string, any>) => {},
   routeReplace: (route: Routes, props?: Record<string, any>) => {},
+  routeBack: () => {}
 });
 
-export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
+export const RouteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const router = useRouter();
 
   const routeTo = (route: Routes, props?: Record<string, any>) => {
@@ -28,8 +29,12 @@ export const RouteProvider = ({ children }: { children: React.ReactNode }) => {
     router.replace(routeString as import('expo-router').RelativePathString);
   };
 
+  const routeBack = () => {
+    router.back()
+  }
+
   return (
-    <RouteContext.Provider value={{ routeTo, routeReplace }}>
+    <RouteContext.Provider value={{ routeTo, routeReplace, routeBack }}>
       {children}
     </RouteContext.Provider>
   );

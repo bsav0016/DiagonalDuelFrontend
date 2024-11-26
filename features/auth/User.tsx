@@ -3,13 +3,18 @@ import { Game } from "../game/models/Game";
 export class User {
     username: string;
     email: string;
-    token: string;
-    games: Game[]
+    games: Game[];
+    isMatchmaking: boolean;
 
-    constructor(username: string, email: string, token: string, games: Game[]) {
+    constructor(
+        username: string, 
+        email: string,
+        games: Game[], 
+        isMatchmaking: boolean = false
+    ) {
         this.username = username
         this.email = email
-        this.token = token
         this.games = games
+        this.isMatchmaking = isMatchmaking
     }
 }

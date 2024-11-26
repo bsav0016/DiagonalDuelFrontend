@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Animated, View } from 'react-native';
-import { ThemedView } from './ThemedView';
+import { StyleSheet, Animated } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
-export function LoadingScreen() {
+export function LoadingSpinner() {
     const [spinValue] = useState(new Animated.Value(0));
 
     useEffect(() => {
@@ -22,30 +21,19 @@ export function LoadingScreen() {
     });
 
     return (
-        <ThemedView style={styles.loadingScreen}>
-            <Animated.View
-                style={[
-                    styles.spinner,
-                    { transform: [{ rotate: spin }] },
-                ]}
-            />
-        </ThemedView>
+        <Animated.View
+            style={[
+                styles.spinner,
+                { transform: [{ rotate: spin }] },
+            ]}
+        />
     );
 }
 
 const styles = StyleSheet.create({
-    loadingScreen: {
-        position: 'absolute',
-        zIndex: 99999,
-        height: '100%',
-        width: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
     spinner: {
-        width: 75,
-        height: 75,
+        width: 50,
+        height: 50,
         borderWidth: 8,
         borderColor: 'rgba(0, 0, 0, 0.1)',
         borderRadius: 50,

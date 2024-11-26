@@ -6,19 +6,26 @@ import { ThemedText } from "@/components/ThemedText";
 import { Game } from "@/features/game/models/Game";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useUser } from "@/contexts/UserContext";
+import { useLoading } from "@/contexts/LoadingContext";
+import { useGamePoll } from "@/contexts/GamePollContext";
 import { Routes } from "./Routes";
 import { GameBoard } from "@/features/game/components/GameBoard";
 import { StyleSheet } from "react-native";
-import { checkWinner, computerMove, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove } from "@/features/game/gameUtils";
+import { checkWinner, computerMove, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove, WinnerInterface } from "@/features/game/gameUtils";
 import { GeneralButton } from "@/components/GeneralButton";
 import { Move } from "@/features/game/models/Move";
 import { GameType } from "@/features/game/models/GameType";
 import { Player } from "@/features/game/models/Player";
-
+import { useGameService } from "@/hooks/useGameService";
 
 export default function GameScreen () {
-    const { routeTo } = useRouteTo();
+    const { routeTo, routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
+    const { user } = useUser();
+    const { setLoading } = useLoading();
+    const { makeMove } = useGameService();
+    const { pollUserGames } = useGamePoll();
 
     const params = useLocalSearchParams();
     const gameParam = params.game as string | undefined;
@@ -30,7 +37,7 @@ export default function GameScreen () {
     }
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
-    const [header, setHeader] = useState<string>(`${gameInstance.player1.username}'s Turn`);
+    const [header, setHeader] = useState<string>('');
     const [gameArray, setGameArray] = useState<number[][]>(gameInstance.initializeGameArray());
     const [selectedMove, setSelectedMove] = useState<Move | null>(null);
     const [lastMove, setLastMove] = useState<Move | null>(
@@ -39,8 +46,14 @@ export default function GameScreen () {
     const [lastUpdated, setLastUpdated] = useState<Date>(
         gameInstance.lastUpdated ? gameInstance.lastUpdated : new Date()
     );
-    const [time, setTime] = useState<number | null>(null);
     const [displayConfirm, setDisplayConfirm] = useState<Boolean>(false);
+    const [winnerDetails, setWinnerDetails] = useState<WinnerInterface | null>(checkWinner(gameArray));
+
+    const timeDiff: number = gameInstance.moveTime
+            ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
+            : 0;
+
+    const timeRemaining: number = timeDiff / 1000;
 
     useEffect(() => {
         if (gameInstance.isComputerTurn()) {
@@ -51,30 +64,26 @@ export default function GameScreen () {
             }
             computerTurn(computerPlayer);
         }
-    }, [])
+    }, []);
 
     useEffect(() => {
-        if (!lastUpdated || !gameInstance.moveTime) return;
+        setHeader(() => {
+            if (gameInstance.winner) {
+                return gameInstance.winner;
+            }
+            if (gameInstance.moves.length % 2 === 0) {
+                return `${gameInstance.player1.username}'s Turn`
+            } else {
+                return `${gameInstance.player2.username}'s Turn`
+            }
+        })
+    }, [gameInstance]);
 
-        const currentTime = new Date().getTime();
-        const lastUpdatedTime = new Date(lastUpdated).getTime();
-        const initialTime = currentTime - lastUpdatedTime - gameInstance.moveTime;
-
-        setTime(Math.max(0, initialTime));
-
-        const interval = setInterval(() => {
-            setTime(prevTime => {
-                if (prevTime === null || prevTime <= 0) {
-                    clearInterval(interval);
-                    return null;
-                }
-                return prevTime - 1000;
-            });
-        }, 1000);
-
-        return () => clearInterval(interval);
-
-    }, [lastUpdated]);
+    useEffect(() => {
+        if (gameInstance.gameType === GameType.Online && !user) {
+            routeReplace(Routes.Login);
+        }
+    }, [user])
 
     const updateGameArray = (move: Move, val: number) => {
         const updatedGameArray = [...gameArray];
@@ -97,51 +106,65 @@ export default function GameScreen () {
     };
 
     const computerTurn = (computerPlayer: Player) => {
-        console.log("Here")
         const move: Move | null = computerMove(gameArray, computerPlayer);
-        console.log(move);
         if (!move) {
             addToast('Computer did not find a valid move!');
             return;
         }
-        console.log(move)
         setSelectedMove(move);
         updateGameArray(move, computerPlayer === gameInstance.player1 ? 1 : 2);
         executeMove(move.row, move.column);
     }
 
-    const executeMove = (row: number, col: number) => {
-        const currentPlayer = gameInstance.playerTurn();
-        
-        let newGameInstance = new Game (
-            gameInstance.gameType,
-            gameInstance.player1,
-            gameInstance.player2,
-            [...gameInstance.moves],
-            lastUpdated
-        );
-        newGameInstance.addMove(currentPlayer, row, col);       
-    
-        if (checkWinner(gameArray)) {
-            const winner: string = `${currentPlayer.username} Wins!`
-            setHeader(winner);
-            newGameInstance.winner = winner
-        } else {
-            setHeader(
-                `${newGameInstance.playerTurn().username}'s Turn`
-            );
-        }
-        setGameInstance(newGameInstance); 
-        setLastMove(selectedMove);
-        resetSelectedButton();
-        updateAvailableMoves(true);
-        if (newGameInstance.isComputerTurn()) {
-            const computerPlayer = newGameInstance.computerPlayer();
-            if (!computerPlayer) {
-                addToast('Computer player has left the game');
-                return;
+    const executeMove = async (row: number, col: number) => {
+        if (gameInstance.gameType === GameType.Online) {
+            setLoading(true);
+            try {
+                if (!gameInstance.gameId) {
+                    throw new Error("No game ID");
+                }
+                await makeMove(gameInstance.gameId, row, col);
+                await pollUserGames();
+                routeBack();
+            } catch (error) {
+                console.error(error);
+                addToast("Network error while making move")
+            } finally {
+                setLoading(false);
+                resetSelectedButton();
             }
-            computerTurn(computerPlayer);
+        } else {
+            const currentPlayer = gameInstance.playerTurn();
+            
+            let newGameInstance = new Game (
+                gameInstance.gameType,
+                gameInstance.gameId,
+                gameInstance.player1,
+                gameInstance.player2,
+                [...gameInstance.moves],
+                lastUpdated
+            );
+            newGameInstance.addMove(currentPlayer, row, col);       
+        
+            const winner = checkWinner(gameArray);
+            if (winner) {
+                const thisWinner: string = `${currentPlayer.username} Wins!`;
+                newGameInstance.winner = thisWinner;
+                setWinnerDetails(winner);
+            }
+            
+            setGameInstance(newGameInstance); 
+            setLastMove(selectedMove);
+            resetSelectedButton();
+            updateAvailableMoves(true);
+            if (newGameInstance.isComputerTurn()) {
+                const computerPlayer = newGameInstance.computerPlayer();
+                if (!computerPlayer) {
+                    addToast('Computer player has left the game');
+                    return;
+                }
+                computerTurn(computerPlayer);
+            }
         }
     }
 
@@ -173,6 +196,7 @@ export default function GameScreen () {
             const newGameInstance = resetGameInstance(gameInstance);
             setGameInstance(newGameInstance);
             setHeader(`${newGameInstance.player1.username}'s Turn`);
+            setWinnerDetails(null);
         });
     }
 
@@ -180,8 +204,10 @@ export default function GameScreen () {
         <CustomHeaderView header={header}>
             <ThemedView style={styles.gameBoard}>
                 <ThemedView style={styles.winnerView}>
-                    { (!gameInstance.winner && !selectedMove) ?
-                    (
+                    { (!gameInstance.winner && 
+                        !selectedMove && 
+                        !(gameInstance.gameType === GameType.Online && user && gameInstance.turnUsername() !== user.username)
+                    ) ? (
                         gameArray.some(row => row.includes(3)) ?
                         <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(true)} />
                         :
@@ -195,9 +221,14 @@ export default function GameScreen () {
                     gameArray={gameArray}
                     selectedMove={selectedMove}
                     lastMove={lastMove}
-                    time={gameInstance.gameType === GameType.Online ? time : null}
+                    time={gameInstance.gameType === GameType.Online && !gameInstance.winner ? timeRemaining : null}
+                    winnerDetails={winnerDetails}
                     resetClicked={resetBoard}
-                    disabled={ gameInstance.isComputerTurn() || !!gameInstance.winner }
+                    disabled={ 
+                        (gameInstance.isComputerTurn() || 
+                        !!gameInstance.winner || 
+                        (gameInstance.gameType === GameType.Online && !!user && gameInstance.turnUsername() !== user.username)) 
+                    }
                     onCellClick={handleCellClick} 
                 />
             </ThemedView>

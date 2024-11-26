@@ -27,4 +27,16 @@ export const Colors = {
     text: 'white',
     background: '#007bff'
   },
+  board: {
+    background: 'blue',
+    player1: '#d96c6c',
+    player2: '#27b84d',
+    valid: '#9127b8'
+  },
+  onlinePlay: {
+    general: '#9127b8',
+    loss: '#de3c3c',
+    win: '#49de60',
+    text: 'black'
+  }
 };

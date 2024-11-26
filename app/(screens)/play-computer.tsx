@@ -13,6 +13,7 @@ import { GameType } from "@/features/game/models/GameType";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "./Routes";
 
+
 export default function PlayComputer () {
     const color = useThemeColor({}, 'text');
     const [level, setLevel] = useState('0');
@@ -58,7 +59,7 @@ export default function PlayComputer () {
 
     const startGame = (player1: Player, player2: Player, computerGame: Boolean) => {
         const gameType: GameType = computerGame ? GameType.Computer : GameType.TwoPlayer;
-        const game: Game = new Game(gameType, player1, player2);
+        const game: Game = new Game(gameType, null, player1, player2);
         const serializedGame = encodeURIComponent(JSON.stringify(game));
         routeTo(Routes.Game, { game: serializedGame });
     }

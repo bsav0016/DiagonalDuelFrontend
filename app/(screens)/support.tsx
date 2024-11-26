@@ -9,7 +9,7 @@ export default function Support () {
         <CustomHeaderView header="Support">
             <ThemedView style={styles.playComputerView}>
                 <ThemedText>
-                    Play computer
+                    Support Page Goes Here!
                 </ThemedText>
             </ThemedView>
         </CustomHeaderView>

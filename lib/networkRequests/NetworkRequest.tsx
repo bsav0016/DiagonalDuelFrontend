@@ -5,13 +5,12 @@ import { NetworkError } from "@/lib/networkRequests/NetworkError";
 export const networkRequest = async (
   urlExtension: string,
   method: RequestMethod,
-  headers: Record<string, string>,
+  headers?: Record<string, string>,
   body?: any,
 ): Promise<any> => {
-  console.log(body)
   const response = await fetch(`${DB_URL}${urlExtension}`, {
     method: method,
-    headers: headers,
+    headers: headers ? headers : undefined,
     body: body ? body : undefined,
   });
 
@@ -22,5 +21,5 @@ export const networkRequest = async (
   }
 
   const data = await response.json();
-  return data;
+  return { data: data, status: response.status };
 };

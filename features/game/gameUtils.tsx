@@ -40,10 +40,18 @@ export function hideValidMoves(gameBoard: number[][]) {
     );
 }
 
-export function checkWinner(gameBoard: number[][]): number | null {
+export interface WinnerInterface {
+    player: number;
+    startRow: number;
+    startCol: number;
+    endRow: number;
+    endCol: number;
+}
+
+export function checkWinner(gameBoard: number[][]): WinnerInterface | null {
     const checkDirection = (i: number, j: number, di: number, dj: number, player: number): boolean => {
-        let count = 0;
-        for (let k = 0; k < 4; k++) {
+        let count = 1;
+        for (let k = 1; k < 4; k++) {
             const row = i + di * k;
             const col = j + dj * k;
 
@@ -58,16 +66,20 @@ export function checkWinner(gameBoard: number[][]): number | null {
 
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
-            if (gameBoard[i][j] === 0) continue;
+            if (gameBoard[i][j] !== 1 && gameBoard[i][j] !== 2) continue;
             
             const player = gameBoard[i][j];
-            if (
-                checkDirection(i, j, 0, 1, player) ||
-                checkDirection(i, j, 1, 0, player) ||
-                checkDirection(i, j, 1, 1, player) ||
-                checkDirection(i, j, 1, -1, player)
-            ) {
-                return player;
+            if (checkDirection(i, j, 0, 1, player)) {
+                return { player: player, startRow: i, startCol: j, endRow: i, endCol: j+3 }
+            }
+            if (checkDirection(i, j, 1, 0, player)) {
+                return { player: player, startRow: i, startCol: j, endRow: i+3, endCol: j }
+            }
+            if (checkDirection(i, j, 1, 1, player)) {
+                return { player: player, startRow: i, startCol: j, endRow: i+3, endCol: j+3 }
+            }
+            if (checkDirection(i, j, 1, -1, player)) {
+                return { player: player, startRow: i, startCol: j, endRow: i+3, endCol: j-3 }
             }
         }
     }
@@ -96,6 +108,7 @@ export function resetGameInstance(game: Game) {
     }
     return new Game(
         game.gameType,
+        null,
         player1,
         player2,
         []

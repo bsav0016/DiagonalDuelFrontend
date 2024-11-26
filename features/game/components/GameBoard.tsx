@@ -1,17 +1,21 @@
 import { ThemedView } from "@/components/ThemedView";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import React from "react";
-import { StyleSheet, View, TouchableOpacity, Text, Dimensions } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Dimensions } from "react-native";
 import { Move } from "../models/Move";
 import { ThemedText } from "@/components/ThemedText";
-import { formatTime } from "@/lib/TimeFormatUtil";
+import Svg, { Line } from 'react-native-svg';
 import { GeneralButton } from "@/components/GeneralButton";
+import { CountdownTimer } from "@/components/CountdownTimer";
+import { Colors } from "@/constants/Colors";
+import { WinnerInterface } from "../gameUtils";
 
 interface GameBoardProps {
     gameArray: number[][];
     selectedMove: Move | null;
     lastMove: Move | null;
     time: number | null;
+    winnerDetails: WinnerInterface | null;
     disabled: boolean;
     onCellClick: (row: number, col: number) => void;
     resetClicked: (() => void) | null;
@@ -22,16 +26,18 @@ export function GameBoard({
     selectedMove,
     lastMove,
     time,
-    disabled, 
+    winnerDetails,
+    disabled,
     onCellClick,
     resetClicked
 }: GameBoardProps) {
     const color = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
+    const boardColors = Colors.board
 
     return (
         <ThemedView style={styles.boardContainer}>
-            <ThemedView style={styles.board}>
+            <ThemedView style={[styles.board, { backgroundColor: boardColors.background }]}>
                 {gameArray.map((row, rowIndex) => (
                     <ThemedView key={rowIndex} style={styles.row}>
                         {row.map((cell, colIndex) => (
@@ -40,11 +46,11 @@ export function GameBoard({
                                 style={[
                                     styles.cell,
                                     cell === 1
-                                    ? styles.player1
+                                    ? { backgroundColor: boardColors.player1 }
                                     : cell === 2
-                                    ? styles.player2
+                                    ? { backgroundColor: boardColors.player2 }
                                     : cell === 3
-                                    ? styles.available
+                                    ? {backgroundColor: boardColors.valid}
                                     : { backgroundColor: color},
                                 ]}
                                 onPress={() => onCellClick(rowIndex, colIndex)}
@@ -58,6 +64,19 @@ export function GameBoard({
                         ))}
                     </ThemedView>
                 ))}
+
+                {winnerDetails && (
+                    <Svg height={width * 0.68} width={width * 0.68} style={styles.svgContainer}>
+                        <Line 
+                            x1={(winnerDetails.startCol + 0.5) * (width * 0.68 / 8)} 
+                            y1={(winnerDetails.startRow + 0.5) * (width * 0.68 / 8)} 
+                            x2={(winnerDetails.endCol + 0.5) * (width * 0.68 / 8)} 
+                            y2={(winnerDetails.endRow + 0.5) * (width * 0.68 / 8)} 
+                            stroke="black" 
+                            strokeWidth="3" 
+                        />
+                    </Svg>
+                )}
             
             </ThemedView>
             { time &&
@@ -65,9 +84,7 @@ export function GameBoard({
                     <ThemedText>
                         Time:
                     </ThemedText>
-                    <ThemedText>
-                        {formatTime(time)}
-                    </ThemedText>
+                    <CountdownTimer timeRemaining={time} />
                 </ThemedView>
             }
             { resetClicked &&
@@ -94,7 +111,6 @@ const styles = StyleSheet.create({
     board: {
         flexDirection: "column",
         alignItems: "center",
-        backgroundColor: 'blue',
         transform: [{ rotate: "-135deg" }],
         maxWidth: '68%',
         aspectRatio: 1,
@@ -123,18 +139,6 @@ const styles = StyleSheet.create({
         borderWidth: 3,
     },
 
-    player1: {
-        backgroundColor: "#f0f",
-    },
-
-    player2: {
-        backgroundColor: "#0ff",
-    },
-
-    available: {
-        backgroundColor: 'green',
-    },
-
     time: {
         position: 'absolute',
         top: '-20%',
@@ -142,4 +146,11 @@ const styles = StyleSheet.create({
         width: '25%',
         zIndex: 1,
     },
+
+    svgContainer: {
+        position: 'absolute',
+        top: '0%',
+        left: '0%',
+        zIndex: 2,
+    }
 });

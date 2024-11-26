@@ -1,7 +1,7 @@
 import React, { RefObject, useEffect, useState } from "react";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
-import { useAuth } from "@/features/auth/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "./Routes";
@@ -12,7 +12,7 @@ import { AuthType } from "@/features/auth/AuthType";
 import { GeneralButton } from "@/components/GeneralButton";
 import { Colors } from "@/constants/Colors";
 import { useThemeColor } from "@/hooks/useThemeColor";
-import { useLoading } from "@/contexts/LoadingContext";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 
 interface Field<T> {
@@ -22,12 +22,10 @@ interface Field<T> {
     ref: RefObject<TextInput>;
 }
 
-
 export default function LoginScreen() {
-    const { user, auth } = useAuth();
+    const { auth } = useAuth();
     const { addToast } = useToast();
     const { routeTo, routeReplace } = useRouteTo();
-    const { setLoading } = useLoading();
     const color = useThemeColor({}, 'text');
     const [formFields, setFormFields] = useState<AuthFields>({
         username: "",
@@ -36,17 +34,12 @@ export default function LoginScreen() {
         confirmPassword: undefined,
     });
     const [type, setType] = useState<AuthType>(AuthType.Login);
+    const [processing, setProcessing] = useState<Boolean>(false);
 
     const usernameRef = React.createRef<TextInput>();
     const passwordRef = React.createRef<TextInput>();
     const confirmPasswordRef = React.createRef<TextInput>();
     const emailRef = React.createRef<TextInput>();
-
-    useEffect(() => {
-        if (user) {
-            routeReplace(Routes.HomeScreen);
-        }
-    }, []);
 
     const focusNextField = (nextField: React.RefObject<TextInput>) => {
         nextField.current?.focus();
@@ -71,13 +64,18 @@ export default function LoginScreen() {
     ];
 
     const authUser = async () => {
+        setProcessing(true);
         try {
-            setLoading(true);
-            await auth(formFields, type);
-            setLoading(false);
-            routeTo(Routes.PlayOnline);
+            const response = await auth(formFields, type);
+            if (response) {
+                routeTo(Routes.PlayOnline);
+            } else {
+                addToast("Invalid username and password");
+            }
         } catch (error) {
             addToast(error instanceof Error ? error.message : "Unknown error");
+        } finally {
+            setProcessing(false);
         }
     };
 
@@ -89,20 +87,13 @@ export default function LoginScreen() {
         }
     }
 
-    const dismissKeyboardIfNeeded = () => {
-        const isFocused = TextInput.State.currentlyFocusedInput();
-        if (!isFocused) {
-            Keyboard.dismiss();
-        }
-    };
-
     const displayedFields: Field<AuthFields>[] = type === AuthType.Login ? loginFields : registerFields;
     const header: string = type === AuthType.Login ? "Login" : "Register"
     const bottomText: string = type === AuthType.Login ? "New User?" : "Already Have an Account?"
     const bottomButtom: string = type === AuthType.Login ? "Register Here" : "Login Here"
 
     return (
-        <CustomHeaderView header={header}>
+        <CustomHeaderView header={header} goBack={() => routeReplace(Routes.HomeScreen)}>
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
 
             <KeyboardAvoidingView
@@ -144,7 +135,12 @@ export default function LoginScreen() {
                                     </ThemedView>
                                 );
                             })}
+                            { processing ? 
+                            <LoadingSpinner />
+                            :
                             <GeneralButton title={header} onPress={authUser} />
+                            }
+                            
                         </ThemedView>
                         <ThemedView style={styles.switchView}>
                             <ThemedText>{bottomText}</ThemedText>
