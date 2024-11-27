@@ -48,6 +48,7 @@ export default function GameScreen () {
     );
     const [displayConfirm, setDisplayConfirm] = useState<Boolean>(false);
     const [winnerDetails, setWinnerDetails] = useState<WinnerInterface | null>(checkWinner(gameArray));
+    const [isComputerProcessing, setIsComputerProcessing] = useState(false);
 
     const timeDiff: number = gameInstance.moveTime
             ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
@@ -56,14 +57,18 @@ export default function GameScreen () {
     const timeRemaining: number = timeDiff / 1000;
 
     useEffect(() => {
-        if (gameInstance.isComputerTurn()) {
-            const computerPlayer = gameInstance.computerPlayer()
-            if (!computerPlayer) {
-                addToast('Computer has given up!');
-                return;
+        const compMakeMove = async () => {
+            if (gameInstance.isComputerTurn()) {
+                const computerPlayer = gameInstance.computerPlayer()
+                if (!computerPlayer) {
+                    addToast('Computer has given up!');
+                    return;
+                }
+                await computerTurn(computerPlayer, gameInstance);
             }
-            computerTurn(computerPlayer);
         }
+
+        compMakeMove();
     }, []);
 
     useEffect(() => {
@@ -105,18 +110,45 @@ export default function GameScreen () {
         setDisplayConfirm(true);
     };
 
-    const computerTurn = (computerPlayer: Player) => {
-        const move: Move | null = computerMove(gameArray, computerPlayer);
+    const computerTurn = async (computerPlayer: Player, newGameInstance: Game) => {
+        const move: Move | null = await computerMove(gameArray, computerPlayer);
         if (!move) {
             addToast('Computer did not find a valid move!');
             return;
         }
         setSelectedMove(move);
-        updateGameArray(move, computerPlayer === gameInstance.player1 ? 1 : 2);
-        executeMove(move.row, move.column);
+        const compPlayerNum = computerPlayer === gameInstance.player1 ? 1 : 2;
+        const updatedGameArray = [...gameArray];
+        updatedGameArray[move.row][move.column] = compPlayerNum;
+        setGameArray(updatedGameArray);
+
+        let updatedGameInstance = new Game (
+            newGameInstance.gameType,
+            newGameInstance.gameId,
+            newGameInstance.player1,
+            newGameInstance.player2,
+            [...newGameInstance.moves, move],
+            new Date(),
+            newGameInstance.moveTime
+        );
+    
+        const winner = checkWinner(updatedGameArray);
+        if (winner) {
+            const thisWinner: string = `Computer Wins!`;
+            updatedGameInstance.winner = thisWinner;
+            setWinnerDetails(winner);
+        }
+        
+        setGameInstance(updatedGameInstance); 
+        setLastMove(move);
+        resetSelectedButton();
+        updateAvailableMoves(true);
     }
 
     const executeMove = async (row: number, col: number) => {
+        if (isComputerProcessing) {
+            return;
+        }
         if (gameInstance.gameType === GameType.Online) {
             setLoading(true);
             try {
@@ -142,28 +174,32 @@ export default function GameScreen () {
                 gameInstance.player1,
                 gameInstance.player2,
                 [...gameInstance.moves],
-                lastUpdated
+                lastUpdated,
+                gameInstance.moveTime
             );
-            newGameInstance.addMove(currentPlayer, row, col);       
+            await newGameInstance.addMove(currentPlayer, row, col);
+            
+            setGameInstance(newGameInstance); 
+            setLastMove(selectedMove);
+            resetSelectedButton();
+            updateAvailableMoves(true);
         
             const winner = checkWinner(gameArray);
             if (winner) {
                 const thisWinner: string = `${currentPlayer.username} Wins!`;
                 newGameInstance.winner = thisWinner;
                 setWinnerDetails(winner);
-            }
-            
-            setGameInstance(newGameInstance); 
-            setLastMove(selectedMove);
-            resetSelectedButton();
-            updateAvailableMoves(true);
-            if (newGameInstance.isComputerTurn()) {
+            } 
+            else if (newGameInstance.isComputerTurn()) {
+                setIsComputerProcessing(true);
                 const computerPlayer = newGameInstance.computerPlayer();
                 if (!computerPlayer) {
                     addToast('Computer player has left the game');
+                    setIsComputerProcessing(false);
                     return;
                 }
-                computerTurn(computerPlayer);
+                await computerTurn(computerPlayer, newGameInstance);
+                setIsComputerProcessing(false);
             }
         }
     }
@@ -200,6 +236,22 @@ export default function GameScreen () {
         });
     }
 
+    const timeExpired = async () => {
+        const waitingPlayer: Player = gameInstance.playerWaiting();
+        const winner: string = `${waitingPlayer.username} Wins by Timeout`
+        let newGameInstance = new Game (
+            gameInstance.gameType,
+            gameInstance.gameId,
+            gameInstance.player1,
+            gameInstance.player2,
+            gameInstance.moves,
+            lastUpdated,
+            gameInstance.moveTime,
+            winner
+        );
+        setGameInstance(newGameInstance);
+    }
+
     return (
         <CustomHeaderView header={header}>
             <ThemedView style={styles.gameBoard}>
@@ -224,7 +276,8 @@ export default function GameScreen () {
                     time={gameInstance.gameType === GameType.Online && !gameInstance.winner ? timeRemaining : null}
                     winnerDetails={winnerDetails}
                     resetClicked={resetBoard}
-                    disabled={ 
+                    timeExpired={timeExpired}
+                    disabled={
                         (gameInstance.isComputerTurn() || 
                         !!gameInstance.winner || 
                         (gameInstance.gameType === GameType.Online && !!user && gameInstance.turnUsername() !== user.username)) 

@@ -91,7 +91,7 @@ export class Game {
         return game;
     }
 
-    addMove(player: Player, row: number, col: number) {
+    async addMove(player: Player, row: number, col: number) {
         const move = new Move(player, row, col);
         this.moves.push(move)
     }
@@ -101,6 +101,14 @@ export class Game {
             return this.player1
         } else {
             return this.player2
+        }
+    }
+
+    playerWaiting() {
+        if (this.player1.username === this.playerTurn().username){
+            return this.player2;
+        } else {
+            return this.player1;
         }
     }
 

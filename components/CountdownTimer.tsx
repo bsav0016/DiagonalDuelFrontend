@@ -7,14 +7,14 @@ interface CountdownTimerProps {
     timeRemaining: number;
     alignRight?: boolean;
     color?: string
-    whenZero?: () => Promise<void>
+    whenZero?: (() => Promise<void>) | null
 }
 
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({ 
     timeRemaining, 
     alignRight=false, 
     color='black', 
-    whenZero=()=>Promise<void> 
+    whenZero=null
 }) => {
   const [timeLeft, setTimeLeft] = useState(timeRemaining);
 
@@ -22,7 +22,9 @@ export const CountdownTimer: React.FC<CountdownTimerProps> = ({
         const interval = setInterval(() => {
             setTimeLeft((prevTime) => {
                 if (prevTime <= 0) {
-                    whenZero();
+                    if (whenZero !== null) {
+                        whenZero();
+                    }
                     clearInterval(interval);
                     return 0;
                 }

@@ -19,6 +19,7 @@ interface GameBoardProps {
     disabled: boolean;
     onCellClick: (row: number, col: number) => void;
     resetClicked: (() => void) | null;
+    timeExpired: (() => Promise<void>) | null;
 }
 
 export function GameBoard({ 
@@ -29,7 +30,8 @@ export function GameBoard({
     winnerDetails,
     disabled,
     onCellClick,
-    resetClicked
+    resetClicked,
+    timeExpired
 }: GameBoardProps) {
     const color = useThemeColor({}, 'text');
     const backgroundColor = useThemeColor({}, 'background');
@@ -84,7 +86,7 @@ export function GameBoard({
                     <ThemedText>
                         Time:
                     </ThemedText>
-                    <CountdownTimer timeRemaining={time} />
+                    <CountdownTimer timeRemaining={time} whenZero={timeExpired}/>
                 </ThemedView>
             }
             { resetClicked &&
