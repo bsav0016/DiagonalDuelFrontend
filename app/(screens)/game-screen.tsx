@@ -12,12 +12,14 @@ import { useGamePoll } from "@/contexts/GamePollContext";
 import { Routes } from "./Routes";
 import { GameBoard } from "@/features/game/components/GameBoard";
 import { StyleSheet } from "react-native";
-import { checkWinner, computerMove, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove, WinnerInterface } from "@/features/game/gameUtils";
+import { checkWinner, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove, WinnerInterface } from "@/features/game/gameUtils";
 import { GeneralButton } from "@/components/GeneralButton";
 import { Move } from "@/features/game/models/Move";
 import { GameType } from "@/features/game/models/GameType";
 import { Player } from "@/features/game/models/Player";
 import { useGameService } from "@/hooks/useGameService";
+import { GameAI } from "@/features/game/models/GameAI";
+
 
 export default function GameScreen () {
     const { routeTo, routeBack, routeReplace } = useRouteTo();
@@ -43,20 +45,24 @@ export default function GameScreen () {
     const [lastMove, setLastMove] = useState<Move | null>(
         gameInstance.moves.length > 0 ? gameInstance.moves[gameInstance.moves.length - 1] : null
     );
-    const [lastUpdated, setLastUpdated] = useState<Date>(
-        gameInstance.lastUpdated ? gameInstance.lastUpdated : new Date()
-    );
     const [displayConfirm, setDisplayConfirm] = useState<Boolean>(false);
     const [winnerDetails, setWinnerDetails] = useState<WinnerInterface | null>(checkWinner(gameArray));
     const [isComputerProcessing, setIsComputerProcessing] = useState(false);
+    const [gameAI, setGameAI] = useState<GameAI | null>(null);
 
     const timeDiff: number = gameInstance.moveTime
             ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
             : 0;
 
     const timeRemaining: number = timeDiff / 1000;
+    const lastUpdated = gameInstance.lastUpdated ? gameInstance.lastUpdated : new Date();
+
 
     useEffect(() => {
+        const compPlayer = gameInstance.computerPlayer()
+        if (compPlayer) {
+            setGameAI(new GameAI(gameArray, compPlayer));
+        }
         const compMakeMove = async () => {
             if (gameInstance.isComputerTurn()) {
                 const computerPlayer = gameInstance.computerPlayer()
@@ -88,7 +94,7 @@ export default function GameScreen () {
         if (gameInstance.gameType === GameType.Online && !user) {
             routeReplace(Routes.Login);
         }
-    }, [user])
+    }, [user]);
 
     const updateGameArray = (move: Move, val: number) => {
         const updatedGameArray = [...gameArray];
@@ -111,7 +117,11 @@ export default function GameScreen () {
     };
 
     const computerTurn = async (computerPlayer: Player, newGameInstance: Game) => {
-        const move: Move | null = await computerMove(gameArray, computerPlayer);
+        if (!gameAI) {
+            addToast("Computer gave up");
+            return;
+        }
+        const move: Move | null = await gameAI.computeMove(newGameInstance.initializeGameArray())
         if (!move) {
             addToast('Computer did not find a valid move!');
             return;
@@ -316,6 +326,7 @@ const styles = StyleSheet.create({
 
     winnerView: {
         height: 50,
+        marginBottom: 50
     },
 
     confirmView: {

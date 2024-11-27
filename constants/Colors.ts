@@ -28,10 +28,12 @@ export const Colors = {
     background: '#007bff'
   },
   board: {
-    background: 'blue',
-    player1: '#d96c6c',
-    player2: '#27b84d',
-    valid: '#9127b8'
+    background: '#0000aa',
+    player1: 'red',//'#d96c6c',
+    player2: 'yellow',//'#27b84d',
+    valid: '#9127b8',
+    empty: '#007bff',
+    borderColor: '#0000dd'
   },
   onlinePlay: {
     general: '#9127b8',

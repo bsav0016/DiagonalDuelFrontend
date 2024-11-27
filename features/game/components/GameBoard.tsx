@@ -33,8 +33,6 @@ export function GameBoard({
     resetClicked,
     timeExpired
 }: GameBoardProps) {
-    const color = useThemeColor({}, 'text');
-    const backgroundColor = useThemeColor({}, 'background');
     const boardColors = Colors.board
 
     return (
@@ -47,20 +45,21 @@ export function GameBoard({
                                 key={colIndex}
                                 style={[
                                     styles.cell,
+                                    { borderColor: boardColors.borderColor },
                                     cell === 1
                                     ? { backgroundColor: boardColors.player1 }
                                     : cell === 2
                                     ? { backgroundColor: boardColors.player2 }
                                     : cell === 3
-                                    ? {backgroundColor: boardColors.valid}
-                                    : { backgroundColor: color},
+                                    ? { backgroundColor: boardColors.valid }
+                                    : { backgroundColor: boardColors.empty },
                                 ]}
                                 onPress={() => onCellClick(rowIndex, colIndex)}
                                 disabled={disabled}
                             >
                                 { ((rowIndex === selectedMove?.row && colIndex === selectedMove?.column) ||
                                     (rowIndex === lastMove?.row && colIndex === lastMove?.column && !selectedMove)) &&
-                                    <View style={[styles.highlightedCell, { borderColor: backgroundColor }]}/>
+                                    <View style={[styles.highlightedCell, { borderColor: 'black' }]}/>
                                 }
                             </TouchableOpacity>
                         ))}
@@ -130,8 +129,7 @@ const styles = StyleSheet.create({
         margin: 4,
         alignItems: "center",
         justifyContent: "center",
-        borderWidth: 1,
-        borderColor: "#ccc",
+        borderWidth: 1.5,
     },
 
     highlightedCell: {
