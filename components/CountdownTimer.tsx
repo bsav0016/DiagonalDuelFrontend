@@ -13,7 +13,7 @@ interface CountdownTimerProps {
 export const CountdownTimer: React.FC<CountdownTimerProps> = ({ 
     timeRemaining, 
     alignRight=false, 
-    color='black', 
+    color='black',
     whenZero=null
 }) => {
   const [timeLeft, setTimeLeft] = useState(timeRemaining);

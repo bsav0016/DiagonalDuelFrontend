@@ -49,7 +49,7 @@ export default function PlayComputer () {
     }
 
     const startComputerGame = () => {
-        const computerPlayer: Player = new Player("Computer", levelNumber);
+        const computerPlayer: Player = new Player("Computer", 0, levelNumber);
         const userPlayer: Player = new Player("Player");
         const computerFirst: Boolean = Math.random() < 0.5;
         const player1: Player = computerFirst ? computerPlayer : userPlayer;

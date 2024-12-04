@@ -10,9 +10,10 @@ export default function HomeScreen() {
   const { routeTo } = useRouteTo();
 
   const homeButtons = [
-    { title: "Play Computer", route: Routes.PlayComputer},
-    { title: "Play Online", route: Routes.PlayOnline},
-    { title: "Support", route: Routes.Support}
+    { title: "Play Computer", route: Routes.PlayComputer },
+    { title: "Play Online", route: Routes.PlayOnline },
+    { title: "Leaderboard", route: Routes.Leaderboard },
+    { title: "Support", route: Routes.Support }
   ]
 
   return (

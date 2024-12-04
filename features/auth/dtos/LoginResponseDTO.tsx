@@ -9,11 +9,14 @@ export class LoginResponseDTO {
         if (
             !data.username ||
             !data.email ||
-            data.games === null 
-            || data.matchmaking === null
+            data.games === null ||
+            data.matchmaking === null ||
+            data.computer_points === null ||
+            data.online_rating === null
         ) {
-            throw new NetworkError("User, email, games, or matchmaking not provided in response", data?.status, data);
+            throw new NetworkError("User, email, games, matchmaking, computer points, or online rating not provided in response", data?.status, data);
         }
+
         console.log(data.matchmaking)
         let userGames: Game[] = []
         for (const userGame of data.games) {
@@ -25,7 +28,9 @@ export class LoginResponseDTO {
             data.username,
             data.email,
             userGames,
-            data.matchmaking
+            data.matchmaking,
+            data.computer_points,
+            data.online_rating
         )
     }
 }

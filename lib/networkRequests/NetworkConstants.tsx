@@ -1,7 +1,7 @@
 const DEV_ENV: Boolean = true
 
-let URL: string = DEV_ENV 
-    ? "http://192.168.1.12:8000/"
+const URL: string = DEV_ENV 
+    ? "http://192.168.1.9:8000/"
     : "''"
 export const DB_URL = URL + "api/"
 
@@ -21,5 +21,6 @@ export const URL_EXT = {
     MATCHMAKING: 'matchmaking/',
     MOVES: 'moves/',
     TOKEN: 'token/',
-    TOKEN_REFRESH: 'token/refresh/'
+    TOKEN_REFRESH: 'token/refresh/',
+    LEADERBOARD: 'leaderboard/'
 }

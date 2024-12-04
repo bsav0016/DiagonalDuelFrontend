@@ -96,7 +96,7 @@ export function resetGameInstance(game: Game) {
         else if (game.player2.computerLevel) {
             levelNumber = game.player2.computerLevel
         }
-        const computerPlayer: Player = new Player("Computer", levelNumber);
+        const computerPlayer: Player = new Player("Computer", 0, levelNumber);
         const userPlayer: Player = new Player("Player");
         const computerFirst: Boolean = Math.random() < 0.5;
         player1 = computerFirst ? computerPlayer : userPlayer;

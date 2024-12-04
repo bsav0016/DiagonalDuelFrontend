@@ -12,7 +12,9 @@ export class RegisterResponseDTO {
             data.user.username,
             data.user.email,
             [],
-            []
+            [],
+            0,
+            1000
         )
     }
 }

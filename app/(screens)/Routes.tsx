@@ -4,5 +4,6 @@ export enum Routes {
     PlayOnline = 'play-online',
     Support = 'support',
     Game = 'game-screen',
-    Login = 'login-screen'
+    Login = 'login-screen',
+    Leaderboard = 'leaderboard'
 }

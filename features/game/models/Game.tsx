@@ -36,8 +36,8 @@ export class Game {
 
     static fromParams(params: any): Game {
         const { gameType, gameId, player1, player2, moves, lastUpdated, moveTime, winner } = params;
-        const reconstructedPlayer1 = new Player(player1.username, player1.computerLevel);
-        const reconstructedPlayer2 = new Player(player2.username, player2.computerLevel);
+        const reconstructedPlayer1 = new Player(player1.username, player1.rating, player1.computerLevel);
+        const reconstructedPlayer2 = new Player(player2.username, player2.rating, player2.computerLevel);
         const reconstructedMoves = moves ? moves.map((m: any) => new Move(m.player, m.row, m.column)) : [];
         const game = new Game(
             gameType, 
@@ -53,11 +53,11 @@ export class Game {
     }
 
     static fromData(data: any): Game {
-        if (!data.id || !data.player1 || !data.player2 || !data.moves || !data.updated_at || !data.time_limit) {
+        if (!data.id || !data.player1 || !data.player1_rating || !data.player2 || !data.player2_rating || !data.moves || !data.updated_at || !data.time_limit) {
             throw new NetworkError("Game doesn't have all parameters");
         }
-        const player1 = new Player(data.player1)
-        const player2 = new Player(data.player2)
+        const player1 = new Player(data.player1, data.player1_rating)
+        const player2 = new Player(data.player2, data.player2_rating)
         let moves: Move[] = []
         for (const move of data.moves) {
             if (!move.player || !move.player.username) {

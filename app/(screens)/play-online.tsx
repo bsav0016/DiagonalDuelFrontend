@@ -68,6 +68,11 @@ export default function PlayOnline () {
             ? game.player2.username
             : game.player1.username;
 
+        const opponentRating: number =
+            game.player1.username === user?.username
+            ? game.player2.rating
+            : game.player1.rating
+
         const timeDiff: number = game.moveTime
             ? game.moveTime - (Date.now() - (game.lastUpdated ? new Date(game.lastUpdated).getTime() : 0))
             : 0;
@@ -86,7 +91,7 @@ export default function PlayOnline () {
                 <TouchableOpacity onPress={() => goToGame(game)} style={styles.gameButton}>
                     <View style={{ flex: 1, justifyContent: 'center' }}>
                         <ThemedText style={{ textAlign: 'left', color: game.winner ? 'black' : 'white' }}>
-                            {opponentUsername}
+                            {`${opponentUsername} (${opponentRating})`}
                         </ThemedText>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -146,7 +151,7 @@ export default function PlayOnline () {
                         <GeneralButton title='New Online Game' onPress={createNewGame} />
                         { user?.matchmaking && user?.matchmaking.length > 0 ?
                             ( user?.matchmaking.map((days) => (
-                                <ThemedView style={styles.matchmakingView}>
+                                <ThemedView style={styles.matchmakingView} key={days}>
                                     <ThemedText style={styles.matchmakingText}>
                                         {`Waiting for ${days}-day turn game...`}
                                     </ThemedText>

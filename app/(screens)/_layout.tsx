@@ -26,6 +26,7 @@ export default function PagesLayout() {
                       <Stack.Screen name={Routes.Support} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Game} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Login} options={{ headerShown: false }} />
+                      <Stack.Screen name={Routes.Leaderboard} options={{ headerShown: false }} />
                     </Stack>
                   </SafeAreaView>
                 </ThemedView>
