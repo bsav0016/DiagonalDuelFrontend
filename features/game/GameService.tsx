@@ -11,7 +11,7 @@ interface RefreshTokenReturn {
 }
 
 export const GameService = {
-    isTokenExpiring(token: string, bufferTimeMilliseconds: number): number | null {
+    isTokenExpiring(token: string, bufferTimeMilliseconds: number): number | null { //TODO: This maybe should get moved to AuthService
         try {
             const decoded: any = jwtDecode(token);
             const expDate = decoded.exp * 1000;
@@ -27,7 +27,7 @@ export const GameService = {
         }
     },
 
-    async refreshToken(refreshToken: string): Promise<RefreshTokenReturn> {
+    async refreshToken(refreshToken: string): Promise<RefreshTokenReturn> { //TODO: This maybe should get moved to AuthService
         try {
             const headers = {
                 ...HEADERS().JSON 
@@ -117,15 +117,18 @@ export const GameService = {
         }
     },
 
-    async startMatchmaking(token: string): Promise<boolean> {
+    async startMatchmaking(token: string, days: number): Promise<boolean> {
         try {
             const headers = {
-                ...HEADERS(token).AUTH
+                ...HEADERS(token).AUTH,
+                ...HEADERS(token).JSON
             }
+            const body = JSON.stringify({ time_limit_days: days }) //TODO: Create DTO for this
             const response = await networkRequest(
                 URL_EXT.MATCHMAKING,
                 RequestMethod.POST,
-                headers
+                headers,
+                body
             )
 
             if (response.status === 201) {

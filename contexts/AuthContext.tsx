@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { AuthService } from '@/features/auth/AuthService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkError } from '@/lib/networkRequests/NetworkError';
@@ -8,10 +8,9 @@ import { useUser } from './UserContext';
 import { router } from 'expo-router';
 
 interface AuthContextType {
-    isAuthenticated: boolean;
-    token: string | null;
-    refreshToken: string | null;
-    userTokenWarned: Boolean[];
+    tokenRef: React.MutableRefObject<string | null>;
+    refreshTokenRef: React.MutableRefObject<string | null>;
+    userTokenWarnedRef: React.MutableRefObject<Boolean[]>;
     setToken: (token: string | null) => void;
     setRefreshToken: (token: string | null) => void;
     setUserTokenWarned: (warned: Boolean[]) => void;
@@ -23,10 +22,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const { setUser } = useUser();
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [token, setToken] = useState<string | null>(null);
-    const [refreshToken, setRefreshToken] = useState<string | null>(null);
-    const [userTokenWarned, setUserTokenWarned] = useState<Boolean[]>([false, false, false]);
+    const tokenRef = useRef<string | null>(null);
+    const setToken = (newToken: string | null) => {
+        tokenRef.current = newToken
+    }
+
+    const refreshTokenRef = useRef<string | null>(null);
+    const setRefreshToken = (newRefreshToken: string | null) => {
+        refreshTokenRef.current = newRefreshToken
+    }
+
+    const userTokenWarnedRef = useRef<Boolean[]>([false, false, false]);
+    const setUserTokenWarned = (newWarned: Boolean[]) => {
+        userTokenWarnedRef.current = newWarned;
+    };
 
     useEffect(() => {
         const setStoredAuthData = async () => {
@@ -35,7 +44,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (storedToken && storedRefreshToken) {
                 setToken(storedToken);
                 setRefreshToken(storedRefreshToken);
-                setIsAuthenticated(true);
             }
         };
 
@@ -48,7 +56,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(user);
             setToken(access);
             setRefreshToken(refresh);
-            setIsAuthenticated(true);
             await AsyncStorage.setItem('token', access);
             await AsyncStorage.setItem('refreshToken', refresh);
             setUserTokenWarned([false, false, false]);
@@ -63,14 +70,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = async () => {
         try {
-            if (!token) return;
+            if (!tokenRef.current) return;
             setUser(null);
             setToken(null);
             setRefreshToken(null);
-            setIsAuthenticated(false);
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refreshToken');
-            await AuthService.logout(token);
+            await AuthService.logout(tokenRef.current);
         } catch (error) {
             throw error;
         } finally {
@@ -80,10 +86,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return (
         <AuthContext.Provider value={{ 
-            isAuthenticated, 
-            token, 
-            refreshToken, 
-            userTokenWarned,
+            tokenRef, 
+            refreshTokenRef, 
+            userTokenWarnedRef,
             setToken, 
             setRefreshToken,
             setUserTokenWarned,

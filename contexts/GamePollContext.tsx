@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, ReactNode } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useLoading } from "./LoadingContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -9,7 +9,7 @@ import { useGameService } from "@/hooks/useGameService";
 
 interface GamePollContextType {
   pollUserGames: () => Promise<void>;
-  createMatchmaking: () => Promise<void>;
+  createMatchmaking: (days: number) => Promise<void>;
   cancelMatchmaking: () => Promise<void>;
 }
 
@@ -78,11 +78,11 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const createMatchmaking = async () => {
+  const createMatchmaking = async (days: number) => {
     if (!user || user.isMatchmaking) return;
     try {
         setLoading(true);
-        const createdGame = await startMatchmaking();
+        const createdGame = await startMatchmaking(days);
         if (createdGame) {
           await pollUserGames();
         } else {

@@ -4,7 +4,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { formatTime } from "@/lib/TimeFormatUtil";
 
 export function useGameService() {
-    const { token, refreshToken, userTokenWarned, setToken, setUserTokenWarned, logout } = useAuth();
+    const { tokenRef, refreshTokenRef, userTokenWarnedRef, setToken, setUserTokenWarned, logout } = useAuth();
     const { addToast } = useToast();
 
     const addExpirationToast = (timeInSeconds: number) => {
@@ -19,36 +19,36 @@ export function useGameService() {
         let expiresFiveDays: number | null = 0;
         let expiresThreeDays: number | null = 0;
         let expiresOneDay: number | null = 0;
-        if (refreshToken) {
-            expiresFiveDays = GameService.isTokenExpiring(refreshToken, fiveDays);
-            expiresThreeDays = GameService.isTokenExpiring(refreshToken, threeDays);
-            expiresOneDay = GameService.isTokenExpiring(refreshToken, oneDay);
+        if (refreshTokenRef.current) {
+            expiresFiveDays = GameService.isTokenExpiring(refreshTokenRef.current, fiveDays);
+            expiresThreeDays = GameService.isTokenExpiring(refreshTokenRef.current, threeDays);
+            expiresOneDay = GameService.isTokenExpiring(refreshTokenRef.current, oneDay);
         }
-        if (expiresFiveDays !== null && !userTokenWarned[0]) {
-            setUserTokenWarned([true, false, false]);
-            addExpirationToast(expiresFiveDays);
+        if (expiresOneDay !== null && !userTokenWarnedRef.current[2]) {
+            setUserTokenWarned([true, true, true]);
+            addExpirationToast(expiresOneDay)
         }
-        else if (expiresThreeDays !== null && !userTokenWarned[1]) {
+        else if (expiresThreeDays !== null && !userTokenWarnedRef.current[1]) {
             setUserTokenWarned([true, true, false]);
             addExpirationToast(expiresThreeDays);
         }
-        else if (expiresOneDay !== null && !userTokenWarned[2]) {
-            setUserTokenWarned([true, true, true]);
-            addExpirationToast(expiresOneDay)
+        else if (expiresFiveDays !== null && !userTokenWarnedRef.current[0]) {
+            setUserTokenWarned([true, false, false]);
+            addExpirationToast(expiresFiveDays);
         }
     }
 
     const getToken = async () => {
         checkUpcomingExpiration();
-        if (token && !GameService.isTokenExpiring(token, 0)) {
-            return token;
+        if (tokenRef.current && !GameService.isTokenExpiring(tokenRef.current, 0)) {
+            return tokenRef.current;
         }
-        if (!refreshToken || GameService.isTokenExpiring(refreshToken, 0)) {
+        if (!refreshTokenRef.current || GameService.isTokenExpiring(refreshTokenRef.current, 0)) {
             logout();
             console.error('No refresh token');
             throw new Error('No refresh token');
         }
-        const { newToken } = await GameService.refreshToken(refreshToken);
+        const { newToken } = await GameService.refreshToken(refreshTokenRef.current);
         setToken(newToken);
         return newToken;
     };
@@ -68,9 +68,9 @@ export function useGameService() {
         return await GameService.getMatchmaking(token);
     };
 
-    const startMatchmaking = async () => {
+    const startMatchmaking = async (days: number) => {
         const token = await getToken();
-        return await GameService.startMatchmaking(token);
+        return await GameService.startMatchmaking(token, days);
     };
 
     const stopMatchmaking = async () => {

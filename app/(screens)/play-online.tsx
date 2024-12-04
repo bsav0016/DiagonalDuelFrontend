@@ -6,7 +6,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { useUser } from "@/contexts/UserContext";
-import { useToast } from "@/contexts/ToastContext";
+import { ToastAction, useToast } from "@/contexts/ToastContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGamePoll } from "@/contexts/GamePollContext";
 import { Routes } from "./Routes";
@@ -84,23 +84,23 @@ export default function PlayOnline () {
                 { borderColor: textColor }
             ]}>
                 <TouchableOpacity onPress={() => goToGame(game)} style={styles.gameButton}>
-                    <View style={{ flex: 3 }}>
+                    <View style={{ flex: 1, justifyContent: 'center' }}>
+                        <ThemedText style={{ textAlign: 'left', color: game.winner ? 'black' : 'white' }}>
+                            {opponentUsername}
+                        </ThemedText>
+                    </View>
+                    <View style={{ flex: 1 }}>
                         { game.winner ?
-                        <ThemedText style={{ textAlign: 'center' }}>{game.winner}</ThemedText>
+                        <ThemedText style={{ textAlign: 'center', color: 'black' }}>{game.winner}</ThemedText>
                         :
-                        <ThemedText style={{ textAlign: 'left', color: 'white' }}>{opponentUsername}</ThemedText>
+                        <CountdownTimer 
+                            timeRemaining={timeRemaining} 
+                            alignRight={true} 
+                            color={'white'}
+                            whenZero={pollUserGames}
+                        />
                         }
                     </View>
-                    {!game.winner &&
-                        <View style={{ flex: 2 }}>
-                            <CountdownTimer 
-                                timeRemaining={timeRemaining} 
-                                alignRight={true} 
-                                color={'white'}
-                                whenZero={pollUserGames}
-                            />
-                        </View>
-                    }
                 </TouchableOpacity>
             </ThemedView>
         )
@@ -111,10 +111,27 @@ export default function PlayOnline () {
         routeTo(Routes.Game, { 'game': serializedGame });
     }
 
+    const gameLengths: number[] = [1, 3, 5, 7]
+
     const createNewGame = () => {
-        addToast('Confirm create new online game?', async () => {
-            await createMatchmaking()
-        });
+        let toastActions: ToastAction[] = []
+        for (let index = 0; index < gameLengths.length; index++) {
+            const label: string = `${gameLengths[index]} Days`
+            const action = async () => {
+                try {
+                    await createMatchmaking(gameLengths[index]);
+                } catch (error) {
+                    console.log(error);
+                    addToast("Oops, could not create game. You may already be searching for a game with this time limit")
+                }
+            }
+            const newAction: ToastAction = {
+                label: label,
+                callback: action
+            }
+            toastActions.push(newAction);
+        }
+        addToast('Select Desired Move Time Limit', toastActions);
     }
 
     return (
@@ -198,6 +215,7 @@ const styles = StyleSheet.create({
     gameButton: {
         flexDirection: 'row',
         width: '100%',
+        gap: 10
     },
 
     gamesHeaderText: {

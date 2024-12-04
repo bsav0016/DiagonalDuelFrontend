@@ -1,9 +1,6 @@
 import { Game } from "./models/Game";
 import { GameType } from "./models/GameType";
-import { Move } from "./models/Move";
 import { Player } from "./models/Player";
-import { ComputerMove } from "./models/ComputerMove";
-import { scoreGroupOfFour } from "./scoreUtils";
 
 export function validateMove(gameBoard: number[][], r: number, c: number) {
     const playedLocations: number[] = [1, 2]

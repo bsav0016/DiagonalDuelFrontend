@@ -1,6 +1,7 @@
 import { checkWinner, validateMove } from "../gameUtils";
 import { scoreGroupOfFour } from "../scoreUtils";
 import { ComputerMove } from "./ComputerMove";
+import { Game } from "./Game";
 import { Move } from "./Move";
 import { Player } from "./Player";
 
@@ -12,20 +13,12 @@ export class GameAI {
     private opponentNumber: number;
     private maxRuntime: number;
 
-    constructor(gameBoard: number[][], player: Player, maxRuntime = 1000) {
+    constructor(gameBoard: number[][], player: Player, computerNumber: number, maxRuntime = 500) {
         this.gameBoard = gameBoard;
         this.player = player
-        this.computerNumber = this.calculateComputerNumber();
+        this.computerNumber = computerNumber;
         this.opponentNumber = this.getOpponent(this.computerNumber);
         this.maxRuntime = maxRuntime;
-    }
-
-    private totalMoves(): number {
-        return this.gameBoard.flat().filter(cell => cell === 1 || cell === 2).length;
-    }
-
-    private calculateComputerNumber(): number {
-        return this.totalMoves() % 2 === 0 ? 1 : 2;
     }
 
     private getOpponent(playerNumber: number): number {
@@ -36,22 +29,36 @@ export class GameAI {
         return this.gameBoard.map(row => row.map(cell => (cell === 3 ? 0 : cell)));
     }
 
-    async computeMove(updatedGameArray: number[][] | null): Promise<Move | null> {
-        if (updatedGameArray) {
-            this.gameBoard = updatedGameArray;
-        }
+    async computeMove(game: Game): Promise<{ updatedGame: Game, newMove: Move} | null> {
+        this.gameBoard = game.initializeGameArray();
         const start = Date.now();
         const tempBoard = this.hideValidMoves();
         const [computerMove] = await this.iterativeDeepening(tempBoard, this.computerNumber, this.maxRuntime);
         if (!computerMove) throw new Error("Couldn't get move");
         console.log(`AI computed move in ${Date.now() - start}ms`);
-        return new Move(this.player, computerMove.row, computerMove.col);
+        const move = new Move(this.player, computerMove.row, computerMove.col);
+
+        const newGame = new Game(
+            game.gameType,
+            game.gameId,
+            game.player1,
+            game.player2,
+            [...game.moves, move],
+            game.lastUpdated,
+            game.moveTime,
+            game.winner
+        )
+        return { updatedGame: newGame, newMove: move }
     }
 
-    private async iterativeDeepening(gameBoard: number[][], computerNumber: number, maxRuntime: number): Promise<[ComputerMove | null, number]> {
+    private async iterativeDeepening(
+        gameBoard: number[][], 
+        computerNumber: number, 
+        maxRuntime: number
+    ): Promise<[ComputerMove | null, number]> {
         const startTime = Date.now();
         let bestMove: [ComputerMove | null, number] = [null, 0];
-        const maxDepth = 64 - this.totalMoves()
+        const maxDepth = 64 - gameBoard.flat().filter(cell => cell === 1 || cell === 2).length;
         for (let depth = 1; depth <= maxDepth; depth++) {
             if (maxRuntime - (Date.now() - startTime) < 0) {
                 console.log(depth);

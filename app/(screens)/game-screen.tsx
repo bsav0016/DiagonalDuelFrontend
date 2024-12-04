@@ -2,10 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
 import { Game } from "@/features/game/models/Game";
 import { useRouteTo } from "@/contexts/RouteContext";
-import { useToast } from "@/contexts/ToastContext";
+import { ToastAction, useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useGamePoll } from "@/contexts/GamePollContext";
@@ -19,6 +18,7 @@ import { GameType } from "@/features/game/models/GameType";
 import { Player } from "@/features/game/models/Player";
 import { useGameService } from "@/hooks/useGameService";
 import { GameAI } from "@/features/game/models/GameAI";
+import { ConfirmView } from "@/features/game/components/ConfirmView";
 
 
 export default function GameScreen () {
@@ -39,7 +39,13 @@ export default function GameScreen () {
     }
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
-    const [header, setHeader] = useState<string>('');
+    const [header, setHeader] = useState<string>(() => {
+        if (gameInstance.winner) {
+            return gameInstance.winner;
+        } else {
+            return ''
+        }
+    });
     const [gameArray, setGameArray] = useState<number[][]>(gameInstance.initializeGameArray());
     const [selectedMove, setSelectedMove] = useState<Move | null>(null);
     const [lastMove, setLastMove] = useState<Move | null>(
@@ -49,6 +55,8 @@ export default function GameScreen () {
     const [winnerDetails, setWinnerDetails] = useState<WinnerInterface | null>(checkWinner(gameArray));
     const [isComputerProcessing, setIsComputerProcessing] = useState(false);
     const [gameAI, setGameAI] = useState<GameAI | null>(null);
+    const [computerTurn, setComputerTurn] = useState(false);
+    
 
     const timeDiff: number = gameInstance.moveTime
             ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
@@ -59,191 +67,101 @@ export default function GameScreen () {
 
 
     useEffect(() => {
-        const compPlayer = gameInstance.computerPlayer()
-        if (compPlayer) {
-            setGameAI(new GameAI(gameArray, compPlayer));
-        }
-        const compMakeMove = async () => {
-            if (gameInstance.isComputerTurn()) {
-                const computerPlayer = gameInstance.computerPlayer()
-                if (!computerPlayer) {
-                    addToast('Computer has given up!');
-                    return;
-                }
-                await computerTurn(computerPlayer, gameInstance);
-            }
-        }
-
-        compMakeMove();
-    }, []);
-
-    useEffect(() => {
-        setHeader(() => {
-            if (gameInstance.winner) {
-                return gameInstance.winner;
-            }
-            if (gameInstance.moves.length % 2 === 0) {
-                return `${gameInstance.player1.username}'s Turn`
-            } else {
-                return `${gameInstance.player2.username}'s Turn`
-            }
-        })
-    }, [gameInstance]);
-
-    useEffect(() => {
         if (gameInstance.gameType === GameType.Online && !user) {
             routeReplace(Routes.Login);
         }
     }, [user]);
 
-    const updateGameArray = (move: Move, val: number) => {
-        const updatedGameArray = [...gameArray];
-        updatedGameArray[move.row][move.column] = val;
-        setGameArray(updatedGameArray);
-    }
-
-    const handleCellClick = (row: number, col: number) => {
-        unselectedButton();
-        if (!validateMove(gameArray, row, col)) {
-            resetSelectedButton();
-            addToast('Invalid Move');
-            return;
-        }
-        const currentPlayer = gameInstance.playerTurn();
-        const move = new Move(currentPlayer, row, col);
-        updateGameArray(move, currentPlayer === gameInstance.player1 ? 1 : 2);
-        setSelectedMove(move);
-        setDisplayConfirm(true);
-    };
-
-    const computerTurn = async (computerPlayer: Player, newGameInstance: Game) => {
-        if (!gameAI) {
-            addToast("Computer gave up");
-            return;
-        }
-        const move: Move | null = await gameAI.computeMove(newGameInstance.initializeGameArray())
-        if (!move) {
-            addToast('Computer did not find a valid move!');
-            return;
-        }
-        setSelectedMove(move);
-        const compPlayerNum = computerPlayer === gameInstance.player1 ? 1 : 2;
-        const updatedGameArray = [...gameArray];
-        updatedGameArray[move.row][move.column] = compPlayerNum;
-        setGameArray(updatedGameArray);
-
-        let updatedGameInstance = new Game (
-            newGameInstance.gameType,
-            newGameInstance.gameId,
-            newGameInstance.player1,
-            newGameInstance.player2,
-            [...newGameInstance.moves, move],
-            new Date(),
-            newGameInstance.moveTime
-        );
-    
-        const winner = checkWinner(updatedGameArray);
-        if (winner) {
-            const thisWinner: string = `Computer Wins!`;
-            updatedGameInstance.winner = thisWinner;
-            setWinnerDetails(winner);
-        }
-        
-        setGameInstance(updatedGameInstance); 
-        setLastMove(move);
-        resetSelectedButton();
-        updateAvailableMoves(true);
-    }
-
-    const executeMove = async (row: number, col: number) => {
-        if (isComputerProcessing) {
-            return;
-        }
-        if (gameInstance.gameType === GameType.Online) {
-            setLoading(true);
-            try {
-                if (!gameInstance.gameId) {
-                    throw new Error("No game ID");
-                }
-                await makeMove(gameInstance.gameId, row, col);
-                await pollUserGames();
-                routeBack();
-            } catch (error) {
-                console.error(error);
-                addToast("Network error while making move")
-            } finally {
-                setLoading(false);
-                resetSelectedButton();
-            }
-        } else {
-            const currentPlayer = gameInstance.playerTurn();
-            
-            let newGameInstance = new Game (
-                gameInstance.gameType,
-                gameInstance.gameId,
-                gameInstance.player1,
-                gameInstance.player2,
-                [...gameInstance.moves],
-                lastUpdated,
-                gameInstance.moveTime
-            );
-            await newGameInstance.addMove(currentPlayer, row, col);
-            
-            setGameInstance(newGameInstance); 
-            setLastMove(selectedMove);
-            resetSelectedButton();
-            updateAvailableMoves(true);
-        
-            const winner = checkWinner(gameArray);
+    useEffect(() => {
+        if (!gameInstance.winner) {
+            const newGameArray = gameInstance.initializeGameArray();
+            const winner = checkWinner(newGameArray);
             if (winner) {
-                const thisWinner: string = `${currentPlayer.username} Wins!`;
-                newGameInstance.winner = thisWinner;
+                const winnerPlayer: Player = winner.player === 1 ? gameInstance.player1 : gameInstance.player2
+                updateWinner(`${winnerPlayer.username} wins!`);
                 setWinnerDetails(winner);
-            } 
-            else if (newGameInstance.isComputerTurn()) {
+            } else {
+                setHeader(() => {
+                    if (gameInstance.moves.length % 2 === 0) {
+                        return `${gameInstance.player1.username}'s Turn`
+                    } else {
+                        return `${gameInstance.player2.username}'s Turn`
+                    }
+                });
+            }
+
+            setGameArray(newGameArray);
+            setComputerTurn(gameInstance.isComputerTurn());
+        }
+    }, [gameInstance]);
+
+    useEffect(() => {
+        const checkComputerTurn = async () => {
+            if (computerTurn && !isComputerProcessing) {
                 setIsComputerProcessing(true);
-                const computerPlayer = newGameInstance.computerPlayer();
-                if (!computerPlayer) {
-                    addToast('Computer player has left the game');
-                    setIsComputerProcessing(false);
+                const compPlayer = gameInstance.computerPlayer();
+                if (!compPlayer) {
+                    addToast("Computer left the match");
+                    setHeader("Player wins by default!")
                     return;
                 }
-                await computerTurn(computerPlayer, newGameInstance);
-                setIsComputerProcessing(false);
+
+                try {
+                    let usedAI: GameAI;
+                    if (gameAI) {
+                        usedAI = gameAI;
+                    } else {
+                        const compNumber = compPlayer.username === gameInstance.player1.username ? 1 : 2
+                        usedAI = new GameAI(gameArray, compPlayer, compNumber);
+                        setGameAI(usedAI);
+                    }
+        
+                    const aiMove = await usedAI.computeMove(gameInstance);
+                    if (aiMove) {
+                        setGameInstance(aiMove.updatedGame);
+                        setSelectedMove(null);
+                        setLastMove(aiMove.newMove);
+                    } else {
+                        addToast("Computer couldn't find a move");
+                        setHeader("Player wins by default!")
+                    }
+                } catch (error) {
+                    addToast("Unexpected error. Please restart game.")
+                } finally {
+                    setIsComputerProcessing(false);
+                }
             }
         }
+        checkComputerTurn();
+    }, [computerTurn]);
+
+    const updateWinner = (winner: string) => {
+        setHeader(winner);
+        const newGameInstance = new Game(
+            gameInstance.gameType,
+            gameInstance.gameId,
+            gameInstance.player1,
+            gameInstance.player2,
+            gameInstance.moves,
+            gameInstance.lastUpdated,
+            gameInstance.moveTime,
+            winner
+        );
+        setGameInstance(newGameInstance);
     }
 
-    const resetSelectedButton = () => {
-        setDisplayConfirm(false);
-        setSelectedMove(null);
-    }
-
-    const unselectedButton = () => {
-        if (selectedMove !== null) {
-            updateGameArray(selectedMove, 0);
-        }
-    }
-
-    const updateAvailableMoves = (hide: Boolean) => {
-        const newGameArray: number[][] = hide ? hideValidMoves(gameArray) : getAllValidMoves(gameArray);
-        setGameArray(newGameArray);
-    }
-
-    const resetBoard = gameInstance.gameType === GameType.Online ? null : () => {
-        addToast('Confirm Reset?', () => {
-            const newGameArray: number[][] = [];
-            for (let i = 0; i < 8; i++) {
-                newGameArray[i] = new Array(8).fill(0);
-            }
-            setGameArray(newGameArray);
-            setLastMove(null);
-            resetSelectedButton();
-            const newGameInstance = resetGameInstance(gameInstance);
-            setGameInstance(newGameInstance);
-            setHeader(`${newGameInstance.player1.username}'s Turn`);
-            setWinnerDetails(null);
-        });
+    const updateMoves = (move: Move) => {
+        const newGameInstance = new Game(
+            gameInstance.gameType,
+            gameInstance.gameId,
+            gameInstance.player1,
+            gameInstance.player2,
+            [...gameInstance.moves, move],
+            gameInstance.lastUpdated,
+            gameInstance.moveTime,
+            gameInstance.winner
+        );
+        setGameInstance(newGameInstance);
     }
 
     const timeExpired = async () => {
@@ -262,6 +180,86 @@ export default function GameScreen () {
         setGameInstance(newGameInstance);
     }
 
+    const handleCellClick = (row: number, col: number) => {
+        setSelectedMove(null);
+        if (!validateMove(gameArray, row, col)) {
+            setDisplayConfirm(false);
+            addToast('Invalid Move');
+            return;
+        }
+        const currentPlayer = gameInstance.playerTurn();
+        const move = new Move(currentPlayer, row, col);
+        setDisplayConfirm(true);
+        setSelectedMove(move);
+    };
+
+    const executeMove = async (row: number, col: number) => {
+        if (isComputerProcessing) {
+            console.log(isComputerProcessing);
+            return;
+        }
+        if (gameInstance.gameType === GameType.Online) {
+            setLoading(true);
+            try {
+                if (!gameInstance.gameId) {
+                    throw new Error("No game ID");
+                }
+                await makeMove(gameInstance.gameId, row, col);
+                await pollUserGames();
+                routeBack();
+            } catch (error) {
+                console.error(error);
+                addToast("Network error while making move")
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            const currentPlayer = gameInstance.playerTurn();
+            const move = new Move(currentPlayer, row, col);
+            updateMoves(move);
+            setLastMove(selectedMove);
+            resetSelectedButton();
+            updateAvailableMoves(false);
+        }
+    }
+
+    const resetSelectedButton = () => {
+        setDisplayConfirm(false);
+        setSelectedMove(null);
+    }
+
+    const updateAvailableMoves = (show: Boolean) => {
+        const newGameArray: number[][] = show ? getAllValidMoves(gameArray) : hideValidMoves(gameArray);
+        setGameArray(newGameArray);
+    }
+
+    const resetBoard = gameInstance.gameType === GameType.Online ? null : () => {
+        const toastAction: ToastAction = {
+            label: 'OK',
+            callback: () => {
+                setLastMove(null);
+                resetSelectedButton();
+                const newGameInstance = resetGameInstance(gameInstance);
+                setGameInstance(newGameInstance);
+                setWinnerDetails(null);
+            }
+        }
+        addToast('Confirm Reset?', [toastAction]);
+    }
+
+    const onPressYes = () => {
+        if (!selectedMove) {
+            addToast('Internal error occurred');
+            console.error('Selected move not set before confirm move');
+            return;
+        }
+        executeMove(selectedMove.row, selectedMove.column)
+    }
+
+    const onPressNo = () => {
+        resetSelectedButton();
+    }
+
     return (
         <CustomHeaderView header={header}>
             <ThemedView style={styles.gameBoard}>
@@ -271,9 +269,9 @@ export default function GameScreen () {
                         !(gameInstance.gameType === GameType.Online && user && gameInstance.turnUsername() !== user.username)
                     ) ? (
                         gameArray.some(row => row.includes(3)) ?
-                        <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(true)} />
+                        <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(false)} />
                         :
-                        <GeneralButton title='Show Valid Moves' onPress={() => updateAvailableMoves(false)} />
+                        <GeneralButton title='Show Valid Moves' onPress={() => updateAvailableMoves(true)} />
                     ) :
                     null
                     }
@@ -296,23 +294,7 @@ export default function GameScreen () {
                 />
             </ThemedView>
             { displayConfirm &&
-            <ThemedView style={styles.confirmView}>
-                <ThemedText style={styles.confirmText}>
-                    Confirm Move?
-                </ThemedText>
-                <GeneralButton 
-                    title="Yes" 
-                    onPress={() => {
-                        if (!selectedMove) {
-                            addToast('Internal error occurred');
-                            console.error('Selected move not set before confirm move');
-                            return;
-                        }
-                        executeMove(selectedMove.row, selectedMove.column)
-                    }} 
-                />
-                <GeneralButton title="No" onPress={() => {resetSelectedButton(), unselectedButton()}} />
-            </ThemedView>
+            <ConfirmView onPressYes={onPressYes} onPressNo={onPressNo} />
             }
         </CustomHeaderView>
     )
@@ -328,16 +310,4 @@ const styles = StyleSheet.create({
         height: 50,
         marginBottom: 50
     },
-
-    confirmView: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 3,
-        marginTop: 10
-    },
-
-    confirmText: {
-        marginRight: 20
-    }
 })

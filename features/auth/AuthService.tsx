@@ -41,7 +41,7 @@ export const AuthService = {
                 const registerResponse: RegisterResponseDTO = new RegisterResponseDTO(data);
                 user = registerResponse.user
             }
-            return { user: user, refresh: data.refresh_token, access: data.access_token }
+            return { user: user, refresh: data.refresh_token, access: data.access_token } //TODO: This could use a DTO
         } catch (error) {
             throw(error);
         }

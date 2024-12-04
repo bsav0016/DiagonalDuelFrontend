@@ -1,16 +1,22 @@
-import React, { createContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useState, useCallback, useRef, ReactNode } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 
+
+export interface ToastAction {
+  label: string;
+  callback: () => void;
+}
+
 interface Toast {
   id: number;
   message: string;
-  okCallback: (() => void) | null;
+  actions: ToastAction[];
 }
 
 interface ToastContextType {
-  addToast: (message: string, okCallback?: (() => void) | null) => void;
+  addToast: (message: string, actions?: ToastAction[]) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -21,12 +27,18 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastRef = React.useRef<(message: string, okCallback?: (() => void) | null) => void>();
+  const toastRef = useRef<(message: string, actions: ToastAction[]) => void>();
 
-  const addToast = useCallback((message: string, okCallback: (() => void) | null = null) => {
-    const id = Date.now();
-    setToasts((prevToasts) => [...prevToasts, { id, message, okCallback }]);
-  }, []);
+  const addToast = useCallback(
+    (
+      message: string, 
+      actions: ToastAction[] = []
+    ) => {
+      const id = Date.now();
+      setToasts((prevToasts) => [...prevToasts, { id, message, actions }]);
+    },
+    []
+  );
 
   const removeToast = useCallback((id: number) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
@@ -37,33 +49,28 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      {toasts.length > 0 && (
-        <ThemedView style={styles.toastOverlay} />
-      )}
+      {toasts.length > 0 && <ThemedView style={styles.toastOverlay} />}
       {toasts.map((toast) => (
         <ThemedView key={toast.id} style={styles.toastContainer}>
           <ThemedText style={styles.toastContainerLabel}>{toast.message}</ThemedText>
-          <ThemedView style={styles.buttonContainer}>
-            {toast.okCallback && (
+          <ThemedView style={[styles.buttonContainer, { flexDirection: toast.actions.length > 1 ? 'column' : 'row' }]}>
+            {toast.actions.map((action, index) => (
               <TouchableOpacity
+                key={index}
                 style={styles.boldButton}
-                onPress={() => removeToast(toast.id)}
+                onPress={() => {
+                  action.callback();
+                  removeToast(toast.id);
+                }}
               >
-                <ThemedText style={styles.boldButtonText}>Cancel</ThemedText>
+                <ThemedText style={styles.boldButtonText}>{action.label}</ThemedText>
               </TouchableOpacity>
-            )}
+            ))}
             <TouchableOpacity
-              style={toast.okCallback ? styles.dimButton : styles.boldButton}
-              onPress={() => {
-                if (toast.okCallback) {
-                  toast.okCallback();
-                }
-                removeToast(toast.id);
-              }}
+              style={styles.dimButton}
+              onPress={() => removeToast(toast.id)}
             >
-              <ThemedText style={toast.okCallback ? styles.dimButtonText : styles.boldButtonText}>
-                {toast.okCallback ? "OK" : "Dismiss"}
-              </ThemedText>
+              <ThemedText style={styles.dimButtonText}>Cancel</ThemedText>
             </TouchableOpacity>
           </ThemedView>
         </ThemedView>
@@ -111,9 +118,10 @@ const styles = StyleSheet.create({
     zIndex: 9998,
   },
   buttonContainer: {
-    flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 8,
+    alignItems: 'center',
+    margin: 4,
+    gap: 4
   },
   boldButton: {
     fontWeight: 'bold',
