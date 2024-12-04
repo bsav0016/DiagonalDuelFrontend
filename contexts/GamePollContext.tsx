@@ -10,7 +10,7 @@ import { useGameService } from "@/hooks/useGameService";
 interface GamePollContextType {
   pollUserGames: () => Promise<void>;
   createMatchmaking: (days: number) => Promise<void>;
-  cancelMatchmaking: () => Promise<void>;
+  cancelMatchmaking: (days: number) => Promise<void>;
 }
 
 const GamePollContext = createContext<GamePollContextType>({
@@ -59,12 +59,12 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const pollMatchmaking = async () => {
-    if (!user || !user.isMatchmaking) return;
+    if (!user || user.matchmaking.length == 0) return;
     try {
-      const stillMatchmaking = await getMatchmaking();
-      if (stillMatchmaking === false) {
+      const updatedMatchmaking = await getMatchmaking();
+      if (!arraysAreEqual(user.matchmaking, updatedMatchmaking)) {
         setLoading(true);
-        updateMatchmaking(false);
+        updateMatchmaking(updatedMatchmaking);
         await pollUserGames();
       }
     } catch (error) {
@@ -78,29 +78,56 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  const createMatchmaking = async (days: number) => {
-    if (!user || user.isMatchmaking) return;
-    try {
-        setLoading(true);
-        const createdGame = await startMatchmaking(days);
-        if (createdGame) {
-          await pollUserGames();
-        } else {
-          updateMatchmaking(true);
+  function arraysAreEqual(arr1: number[], arr2: number[]) {
+    if (arr1.length !== arr2.length) {
+      return false;
+    }
+  
+    for (let i = 0; i < arr1.length; i++) {
+      let inArr2 = false
+      for (let j = 0; j < arr2.length; j++) {
+        if (arr1[i] === arr2[j]) {
+          inArr2 = true
         }
+      }
+      if (!inArr2) {
+        return false;
+      }
+    }
+  
+    return true;
+  }
+
+  const createMatchmaking = async (days: number) => {
+    try {
+      if (!user || user.matchmaking.includes(days)){
+        throw new Error('Invalid request')
+      };
+      setLoading(true);
+      const createdGame = await startMatchmaking(days);
+      if (createdGame) {
+        await pollUserGames();
+      } else {
+        let updatedMatchmaking: number[] = user.matchmaking
+        updatedMatchmaking.push(days)
+        updateMatchmaking(updatedMatchmaking);
+      }
     } catch (error) {
-        console.error("Error creating matchmaking: ", error);
+      console.error("Error creating matchmaking: ", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   }
 
-  const cancelMatchmaking = async () => {
-    if (!user || !user.isMatchmaking) return;
+  const cancelMatchmaking = async (days: number) => {
     try {
+      if (!user || !user.matchmaking.includes(days)){
+        throw new Error('Invalid request')
+      };
       setLoading(true);
-      await stopMatchmaking();
-      updateMatchmaking(false);
+      await stopMatchmaking(days);
+      const updatedMatchmaking = user.matchmaking.filter(item => item !== days);
+      updateMatchmaking(updatedMatchmaking);
     } catch (error) {
       console.error("Error cancelling matchmaking: ", error);
     } finally {

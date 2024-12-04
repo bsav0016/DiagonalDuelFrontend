@@ -25,7 +25,7 @@ export function useGameService() {
             expiresOneDay = GameService.isTokenExpiring(refreshTokenRef.current, oneDay);
         }
         if (expiresOneDay !== null && !userTokenWarnedRef.current[2]) {
-            setUserTokenWarned([true, true, true]);
+            setUserTokenWarned([true, true, true]); //TODO: User token warned could probably be a variable within this hook
             addExpirationToast(expiresOneDay)
         }
         else if (expiresThreeDays !== null && !userTokenWarnedRef.current[1]) {
@@ -73,9 +73,9 @@ export function useGameService() {
         return await GameService.startMatchmaking(token, days);
     };
 
-    const stopMatchmaking = async () => {
+    const stopMatchmaking = async (days: number) => {
         const token = await getToken();
-        return await GameService.stopMatchmaking(token);
+        return await GameService.stopMatchmaking(token, days);
     }
 
     return {

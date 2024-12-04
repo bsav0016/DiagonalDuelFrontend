@@ -21,7 +21,7 @@ export default function Support () {
                     Thank you for playing Diagonal Duel!
                 </ThemedText>
                 <ThemedText>
-                    If you have any feedback, please feel to reach out at the below email address:
+                    If you have any feedback, please feel to reach out:
                 </ThemedText>
                 <TouchableOpacity onPress={openEmail}>
                     <ThemedText style={styles.emailLink}>
@@ -42,8 +42,9 @@ const styles = StyleSheet.create({
 
     thankYouText: {
         fontWeight: 'bold',
-        fontSize: 20,
-        marginBottom: 20
+        fontSize: 22,
+        marginBottom: 20,
+        textAlign: 'center'
     },
 
     emailLink: {

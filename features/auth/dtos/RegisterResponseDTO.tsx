@@ -11,7 +11,7 @@ export class RegisterResponseDTO {
         this.user = new User(
             data.user.username,
             data.user.email,
-            data.token,
+            [],
             []
         )
     }

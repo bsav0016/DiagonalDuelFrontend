@@ -33,6 +33,7 @@ export function GameBoard({
     resetClicked,
     timeExpired
 }: GameBoardProps) {
+    const textColor = useThemeColor({}, 'text');
     const boardColors = Colors.board
 
     return (
@@ -85,7 +86,7 @@ export function GameBoard({
                     <ThemedText>
                         Time:
                     </ThemedText>
-                    <CountdownTimer timeRemaining={time} whenZero={timeExpired}/>
+                    <CountdownTimer timeRemaining={time} whenZero={timeExpired} color={textColor}/>
                 </ThemedView>
             }
             { resetClicked &&

@@ -97,7 +97,7 @@ export const GameService = {
         }
     },
 
-    async getMatchmaking(token: string): Promise<boolean> {
+    async getMatchmaking(token: string): Promise<number[]> {
         try {
             const headers = {
                 ...HEADERS(token).AUTH
@@ -144,15 +144,20 @@ export const GameService = {
         }
     },
 
-    async stopMatchmaking(token: string): Promise<void> {
+    async stopMatchmaking(token: string, days: number): Promise<void> {
         try {
             const headers = {
-                ...HEADERS(token).AUTH
+                ...HEADERS(token).AUTH,
+                ...HEADERS(token).JSON
             }
+            const body = JSON.stringify({
+                time_limit_days: days
+            })
             await networkRequest(
                 URL_EXT.MATCHMAKING,
                 RequestMethod.DELETE,
-                headers
+                headers,
+                body
             );
             return
         } catch (error) {

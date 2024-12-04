@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import { StyleSheet, TouchableOpacity, ScrollView, View } from "react-native";
+import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from "react-native";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -136,21 +136,31 @@ export default function PlayOnline () {
 
     return (
         <CustomHeaderView header="Play Online" goBack={() => routeReplace(Routes.HomeScreen)}>
-            <ThemedView style={{ alignItems: 'center'}}>
-                { user?.isMatchmaking ? 
-                <View>
-                    <ThemedText>Looking for worthy opponent...</ThemedText>
-                    <GeneralButton title="Cancel Matchmaking" onPress={cancelMatchmaking} />
-                </View>
-                :
-                <GeneralButton title='New Online Game' onPress={createNewGame} />
-                }
-            </ThemedView>
             <ThemedView style={{ alignItems: 'center' }}>
                 <GeneralButton title="Logout" onPress={logout} />
             </ThemedView>
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }} >
-                <ThemedView style={styles.playComputerView}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <ThemedView style={styles.playOnlineView}>
+                    <ThemedView>
+                        <ThemedText type='subtitle' style={styles.gamesHeaderText}>Matchmaking</ThemedText>
+                        <GeneralButton title='New Online Game' onPress={createNewGame} />
+                        { user?.matchmaking && user?.matchmaking.length > 0 ?
+                            ( user?.matchmaking.map((days) => (
+                                <ThemedView style={styles.matchmakingView}>
+                                    <ThemedText style={styles.matchmakingText}>
+                                        {`Waiting for ${days}-day turn game...`}
+                                    </ThemedText>
+                                    <TouchableOpacity onPress={() => cancelMatchmaking(days)}>
+                                        <Text style={styles.matchmakingCancel}>Cancel</Text>
+                                    </TouchableOpacity>
+                                </ThemedView>
+                            )))
+                            :
+                            (
+                                <ThemedText style={styles.noGamesText}>No active matchmaking</ThemedText>
+                            )
+                        }
+                    </ThemedView>
                     <ThemedView style={styles.gameSetView}>
                         <ThemedText type='subtitle' style={styles.gamesHeaderText}>Your Turn!</ThemedText>
                         { yourTurnGames.length === 0 &&
@@ -190,11 +200,29 @@ const styles = StyleSheet.create({
         marginTop: 20
     },
 
-    playComputerView: {
+    playOnlineView: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingBottom: 50
+      paddingBottom: 50,
+      gap: 40
+    },
+
+    matchmakingView: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        gap: 10
+    },
+
+    matchmakingText: {
+        fontSize: 16
+    },
+
+    matchmakingCancel: {
+        color: 'red',
+        fontSize: 16,
+        textDecorationLine: 'underline'
     },
 
     gameSetView: {
@@ -220,6 +248,7 @@ const styles = StyleSheet.create({
 
     gamesHeaderText: {
         textAlign: 'center',
+        textDecorationLine: 'underline'
     },
 
     noGamesText: {

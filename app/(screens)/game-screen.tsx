@@ -91,7 +91,9 @@ export default function GameScreen () {
             }
 
             setGameArray(newGameArray);
-            setComputerTurn(gameInstance.isComputerTurn());
+            if (!winner) {
+                setComputerTurn(gameInstance.isComputerTurn());
+            }
         }
     }, [gameInstance]);
 

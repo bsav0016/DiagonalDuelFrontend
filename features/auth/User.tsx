@@ -4,17 +4,17 @@ export class User {
     username: string;
     email: string;
     games: Game[];
-    isMatchmaking: boolean;
+    matchmaking: number[];
 
     constructor(
         username: string, 
         email: string,
         games: Game[], 
-        isMatchmaking: boolean = false
+        matchmaking: number[] = []
     ) {
         this.username = username
         this.email = email
         this.games = games
-        this.isMatchmaking = isMatchmaking
+        this.matchmaking = matchmaking
     }
 }

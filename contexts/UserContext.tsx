@@ -7,7 +7,7 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   updateUserGames: (games: Game[]) => void;
-  updateMatchmaking: (matchmaking: boolean) => void;
+  updateMatchmaking: (matchmaking: number[]) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -40,11 +40,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateUserGames = (games: Game[]) => {
     if (!user) return;
-    const updatedUser = new User(user.username, user.email, games, user.isMatchmaking);
+    const updatedUser = new User(user.username, user.email, games, user.matchmaking);
     setUser(updatedUser);
   };
 
-  const updateMatchmaking = (matchmaking: boolean) => {
+  const updateMatchmaking = (matchmaking: number[]) => {
     if (!user) return;
     const updatedUser = new User(user.username, user.email, user.games, matchmaking);
     setUser(updatedUser);
