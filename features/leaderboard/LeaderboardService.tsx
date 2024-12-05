@@ -2,8 +2,8 @@ import { URL_EXT } from "@/lib/networkRequests/NetworkConstants";
 import { NetworkError } from "@/lib/networkRequests/NetworkError";
 import { networkRequest } from "@/lib/networkRequests/NetworkRequest";
 import { RequestMethod } from "@/lib/networkRequests/RequestMethod";
-import { ComputerPointsLeader } from "./ComputerPointsLeader";
-import { OnlineRatingLeader } from "./OnlineRatingLeader";
+import { ComputerPointsLeader } from "./models/ComputerPointsLeader";
+import { OnlineRatingLeader } from "./models/OnlineRatingLeader";
 
 interface Leaderboards {
     computerPointsLeaderboard: ComputerPointsLeader[]
@@ -22,15 +22,19 @@ export const LeaderboardService = {
                 throw new NetworkError("Couldn't get leaderboards");
             }
 
+            let index = 1
             const computerPointsLeaderboard = []
             for (const leader of data.computer_points_leaderboard) {
-                const newLeader = new ComputerPointsLeader(leader.username, leader.computer_points)
+                const newLeader = new ComputerPointsLeader(leader.username, leader.computer_points, index);
+                index += 1;
                 computerPointsLeaderboard.push(newLeader);
             }
 
+            index = 1;
             const onlineRatingLeaderboard = []
             for (const leader of data.online_rating_leaderboard) {
-                const newLeader = new OnlineRatingLeader(leader.username, leader.online_rating)
+                const newLeader = new OnlineRatingLeader(leader.username, leader.online_rating, index);
+                index += 1;
                 onlineRatingLeaderboard.push(newLeader);
             }
             return { computerPointsLeaderboard, onlineRatingLeaderboard };

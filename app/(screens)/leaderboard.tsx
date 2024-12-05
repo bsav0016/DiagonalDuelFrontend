@@ -5,20 +5,24 @@ import { useLoading } from "@/contexts/LoadingContext";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
-import { ComputerPointsLeader } from "@/features/leaderboard/ComputerPointsLeader";
+import { ComputerPointsLeader } from "@/features/leaderboard/models/ComputerPointsLeader";
 import { LeaderboardService } from "@/features/leaderboard/LeaderboardService";
-import { OnlineRatingLeader } from "@/features/leaderboard/OnlineRatingLeader";
+import { OnlineRatingLeader } from "@/features/leaderboard/models/OnlineRatingLeader";
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
 
 export default function Leaderboard() {
     const { setLoading } = useLoading();
     const { addToast } = useToast();
     const { routeBack } = useRouteTo();
-    const { user } = useUser()
+    const { userRef } = useUser()
+
     const [computerLeaderboard, setComputerLeaderboard] = useState<ComputerPointsLeader[]>([]);
     const [ratingLeaderboard, setRatingLeaderboard] = useState<OnlineRatingLeader[]>([]);
     const [selectedTab, setSelectedTab] = useState<"computer" | "rating">("computer");
+
+    const [userComputerLeader, setUserComputerLeader] = useState<ComputerPointsLeader | null>(null);
+    const [userRatingLeader, setUserRatingLeader] = useState<OnlineRatingLeader | null>(null);
 
     useEffect(() => {
         const populateLeaderboards = async () => {
@@ -27,7 +31,6 @@ export default function Leaderboard() {
                 const { computerPointsLeaderboard, onlineRatingLeaderboard } = await LeaderboardService.getLeaderboards();
                 setComputerLeaderboard(computerPointsLeaderboard);
                 setRatingLeaderboard(onlineRatingLeaderboard);
-                console.log(computerPointsLeaderboard)
             } catch (error) {
                 console.error(error);
                 addToast("Could not get leaderboard");
@@ -40,9 +43,27 @@ export default function Leaderboard() {
         populateLeaderboards();
     }, []);
 
-    const renderLeaderboardItem = (item: ComputerPointsLeader | OnlineRatingLeader, index: number) => (
-        <ThemedView style={styles.leaderboardItem}>
-            <ThemedText style={styles.rank}>{index + 1}</ThemedText>
+    useEffect(() => {
+        setUserComputerLeader(null);
+        for (const leader of computerLeaderboard) {
+            if (leader.username === userRef.current?.username) {
+                setUserComputerLeader(leader);
+            }
+        }
+    }, [computerLeaderboard]);
+
+    useEffect(() => {
+        setUserRatingLeader(null);
+        for (const leader of ratingLeaderboard) {
+            if (leader.username === userRef.current?.username) {
+                setUserRatingLeader(leader);
+            }
+        }
+    }, [ratingLeaderboard]);
+
+    const renderLeaderboardItem = (item: ComputerPointsLeader | OnlineRatingLeader) => (
+        <ThemedView style={[styles.leaderboardItem, item.username === userRef.current?.username && { backgroundColor: 'orange' }]}>
+            <ThemedText style={styles.rank}>{item.rank}</ThemedText>
             <ThemedText style={styles.username}>{item.username}</ThemedText>
             <ThemedText style={styles.value}>    
                 {item instanceof ComputerPointsLeader ? `${(item as ComputerPointsLeader).computerPoints}` : (item as OnlineRatingLeader).onlineRating}
@@ -72,24 +93,31 @@ export default function Leaderboard() {
                     </TouchableOpacity>
                 </View>
 
-                {/*{ user.username? 
-                
-                }*/}
-
                 { selectedTab === "computer" ? 
-                <FlatList
-                    data={computerLeaderboard}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item, index }) => renderLeaderboardItem(item, index)}
-                    contentContainerStyle={styles.listContainer}
-                />
+                    <View style={styles.listView}>
+                        {   userComputerLeader &&
+                            renderLeaderboardItem(userComputerLeader)                        
+                        }
+                        <FlatList
+                            data={computerLeaderboard}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => renderLeaderboardItem(item)}
+                            contentContainerStyle={styles.listContainer}
+                        />
+                    </View>
                 :
-                <FlatList
-                    data={ratingLeaderboard}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={({ item, index }) => renderLeaderboardItem(item, index)}
-                    contentContainerStyle={styles.listContainer}
-                />
+                    <View style={styles.listView}>
+                        {   userRatingLeader &&
+                            renderLeaderboardItem(userRatingLeader)                        
+                        }
+                        <FlatList
+                            data={ratingLeaderboard}
+                            keyExtractor={(item, index) => index.toString()}
+                            renderItem={({ item }) => renderLeaderboardItem(item)}
+                            contentContainerStyle={styles.listContainer}
+                        />
+                    </View>
+                    
                 }
             </ThemedView>
         </CustomHeaderView>
@@ -125,14 +153,19 @@ const styles = StyleSheet.create({
         color: "#3498db",
         fontWeight: "bold",
     },
+    listView: {
+        flex: 1,
+        display: 'flex'
+    },
     listContainer: {
         paddingBottom: 16,
+        flex: 1
     },
     leaderboardItem: {
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        paddingVertical: 12,
+        padding: 12,
         borderBottomWidth: 1,
         borderBottomColor: "#ccc",
     },

@@ -5,5 +5,6 @@ export enum Routes {
     Support = 'support',
     Game = 'game-screen',
     Login = 'login-screen',
-    Leaderboard = 'leaderboard'
+    Leaderboard = 'leaderboard',
+    Profile = 'profile'
 }

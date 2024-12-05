@@ -1,10 +1,10 @@
-import React, { createContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { Game } from '@/features/game/models/Game';
 import { User } from '@/features/auth/User';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserContextType {
-  user: User | null;
+  userRef: React.MutableRefObject<User | null>;
   setUser: (user: User | null) => void;
   updateUserGames: (games: Game[]) => void;
   updateMatchmaking: (matchmaking: number[]) => void;
@@ -13,45 +13,64 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const userRef = useRef<User | null>(null);
+  const setUser = async (newUser: User | null) => {
+    userRef.current = newUser
+    if (!userRef.current) {
+      await AsyncStorage.removeItem('user')
+    } else {
+      await AsyncStorage.setItem('user', JSON.stringify(newUser));
+    }
+  }
 
   useEffect(() => {
     const setStoredUser = async () => {
       const storedUser = await AsyncStorage.getItem('user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const plainUser = JSON.parse(storedUser);
+        const currentUser = new User (
+          plainUser.username,
+          plainUser.email,
+          plainUser.games,
+          plainUser.matchmaking,
+          plainUser.computerPoints,
+          plainUser.onlineRating
+        );
+        setUser(currentUser);
       }
     };
 
     setStoredUser();
   }, []);
 
-  useEffect(() => {
-    const updateUser = async () => {
-      if (!user) {
-        await AsyncStorage.removeItem('user')
-      } else {
-        AsyncStorage.setItem('user', JSON.stringify(user));
-      }
-    }
-
-    updateUser();
-  }, [user]);
-
   const updateUserGames = (games: Game[]) => {
-    if (!user) return;
-    const updatedUser = new User(user.username, user.email, games, user.matchmaking);
+    if (!userRef.current) return;
+    const updatedUser = new User(
+      userRef.current.username, 
+      userRef.current.email, 
+      games, 
+      userRef.current.matchmaking,
+      userRef.current.computerPoints,
+      userRef.current.onlineRating
+    );
     setUser(updatedUser);
   };
 
   const updateMatchmaking = (matchmaking: number[]) => {
-    if (!user) return;
-    const updatedUser = new User(user.username, user.email, user.games, matchmaking);
+    if (!userRef.current) return;
+    const updatedUser = new User(
+      userRef.current.username, 
+      userRef.current.email, 
+      userRef.current.games, 
+      matchmaking,
+      userRef.current.computerPoints,
+      userRef.current.onlineRating
+    );
     setUser(updatedUser);
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, updateUserGames, updateMatchmaking }}>
+    <UserContext.Provider value={{ userRef, setUser, updateUserGames, updateMatchmaking }}>
       {children}
     </UserContext.Provider>
   );

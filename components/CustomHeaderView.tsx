@@ -1,10 +1,12 @@
 import React, { ReactNode } from "react";
 import { StyleSheet, TouchableOpacity, StyleProp, ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
+import { useRouteTo } from "@/contexts/RouteContext";
 import { ThemedView } from "./ThemedView";
 import { ThemedText } from "./ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
+import { Routes } from "@/app/(screens)/Routes";
 
 
 interface CustomHeaderProps {
@@ -13,6 +15,7 @@ interface CustomHeaderProps {
     canGoBack?: Boolean;
     goBack?: () => void,
     style?: StyleProp<ViewStyle>;
+    goProfile?: Boolean;
 }
 
 export function CustomHeaderView({ 
@@ -20,9 +23,11 @@ export function CustomHeaderView({
     children, 
     canGoBack=true,
     goBack,
-    style
+    style,
+    goProfile=false
 }: CustomHeaderProps) {
     const router = useRouter();
+    const { routeTo } = useRouteTo();
 
     const handleBackPress = goBack || router.back
 
@@ -30,14 +35,22 @@ export function CustomHeaderView({
         <ThemedView style={[styles.screenView, style]}>
             <ThemedView style={styles.headerView}>
                 {canGoBack &&
-                <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={30} color={Colors.button.text} />
-                    <ThemedText style={styles.backText}>Back</ThemedText>
-                </TouchableOpacity>
+                    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={30} color={Colors.button.text} />
+                        <ThemedText style={styles.backText}>Back</ThemedText>
+                    </TouchableOpacity>
                 }
+
                 <ThemedText style={[styles.headerText, canGoBack && styles.headerTextWithBack]}>
                     {header}
                 </ThemedText>
+
+                {goProfile &&
+                    <TouchableOpacity onPress={() => routeTo(Routes.Profile)} style={styles.profileButton}>
+                        <ThemedText style={styles.backText}>Profile</ThemedText>
+                        <Ionicons name="person" size={15} color={Colors.button.text} />
+                    </TouchableOpacity>
+                }
             </ThemedView>
             <ThemedView style={styles.contentView}>
                 {children}
@@ -74,6 +87,20 @@ const styles = StyleSheet.create({
         width: 'auto',
         height: 40,
         paddingRight: 5,
+        borderRadius: 5
+    },
+
+    profileButton: {
+        position: 'absolute',
+        right: 10,
+        top: 10,
+        backgroundColor: Colors.button.background,
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        width: 'auto',
+        height: 40,
+        paddingHorizontal: 5,
         borderRadius: 5
     },
 

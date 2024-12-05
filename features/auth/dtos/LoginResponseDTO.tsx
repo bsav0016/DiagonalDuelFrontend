@@ -17,7 +17,6 @@ export class LoginResponseDTO {
             throw new NetworkError("User, email, games, matchmaking, computer points, or online rating not provided in response", data?.status, data);
         }
 
-        console.log(data.matchmaking)
         let userGames: Game[] = []
         for (const userGame of data.games) {
             const game: Game = Game.fromData(userGame);

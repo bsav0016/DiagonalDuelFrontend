@@ -1,5 +1,5 @@
 import { checkWinner, validateMove } from "../gameUtils";
-import { scoreGroupOfFour } from "../scoreUtils";
+import { scoreGroupOfFour, scoreGroupOfFive, prioritizeCenter } from "../scoreUtils";
 import { ComputerMove } from "./ComputerMove";
 import { Game } from "./Game";
 import { Move } from "./Move";
@@ -140,9 +140,13 @@ export class GameAI {
         for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
             for (let colIndex = 0; colIndex < numCols; colIndex++) {
                 const cell = gameBoard[rowIndex][colIndex];
-                if (cell === 0) continue;
-                const multiplier = cell === playerNumber ? 1 : -1;
-                totalScore += scoreGroupOfFour(gameBoard, rowIndex, colIndex, cell, availableMoves) * multiplier;
+                if (cell === 0) {
+                    totalScore += scoreGroupOfFive(gameBoard, rowIndex, colIndex, playerNumber, availableMoves)
+                } else {
+                    const multiplier = cell === playerNumber ? 1 : -1;
+                    totalScore += prioritizeCenter(rowIndex, colIndex) * multiplier;
+                    totalScore += scoreGroupOfFour(gameBoard, rowIndex, colIndex, cell, availableMoves) * multiplier;
+                }
             }
         }
 

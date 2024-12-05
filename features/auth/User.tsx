@@ -23,4 +23,21 @@ export class User {
         this.computerPoints = computerPoints
         this.onlineRating = onlineRating
     }
+
+    getWinsAndLosses(): { wins: number; losses: number } {
+        let wins = 0;
+        let losses = 0;
+        console.log(this.games)
+        for (const game of this.games) {
+            if (game.winner) {
+                if (game.winner.split(" ")[0] === this.username) {
+                    wins += 1;
+                } else {
+                    losses += 1;
+                }
+            }
+        }
+    
+        return { wins, losses };
+    }
 }

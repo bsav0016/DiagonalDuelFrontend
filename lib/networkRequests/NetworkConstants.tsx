@@ -1,7 +1,7 @@
 const DEV_ENV: Boolean = true
 
 const URL: string = DEV_ENV 
-    ? "http://192.168.1.9:8000/"
+    ? "http://192.168.1.12:8000/"
     : "''"
 export const DB_URL = URL + "api/"
 

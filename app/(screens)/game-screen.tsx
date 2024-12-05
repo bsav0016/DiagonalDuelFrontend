@@ -24,7 +24,7 @@ import { ConfirmView } from "@/features/game/components/ConfirmView";
 export default function GameScreen () {
     const { routeTo, routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { user } = useUser();
+    const { userRef } = useUser();
     const { setLoading } = useLoading();
     const { makeMove } = useGameService();
     const { pollUserGames } = useGamePoll();
@@ -67,10 +67,10 @@ export default function GameScreen () {
 
 
     useEffect(() => {
-        if (gameInstance.gameType === GameType.Online && !user) {
+        if (gameInstance.gameType === GameType.Online && !userRef.current) {
             routeReplace(Routes.Login);
         }
-    }, [user]);
+    }, [userRef.current]);
 
     useEffect(() => {
         if (!gameInstance.winner) {
@@ -99,6 +99,8 @@ export default function GameScreen () {
 
     useEffect(() => {
         const checkComputerTurn = async () => {
+            console.log(computerTurn)
+            console.log(isComputerProcessing)
             if (computerTurn && !isComputerProcessing) {
                 setIsComputerProcessing(true);
                 const compPlayer = gameInstance.computerPlayer();
@@ -134,6 +136,7 @@ export default function GameScreen () {
                 }
             }
         }
+
         checkComputerTurn();
     }, [computerTurn]);
 
@@ -197,7 +200,6 @@ export default function GameScreen () {
 
     const executeMove = async (row: number, col: number) => {
         if (isComputerProcessing) {
-            console.log(isComputerProcessing);
             return;
         }
         if (gameInstance.gameType === GameType.Online) {
@@ -241,9 +243,10 @@ export default function GameScreen () {
             callback: () => {
                 setLastMove(null);
                 resetSelectedButton();
+                setWinnerDetails(null);
+                setComputerTurn(false);
                 const newGameInstance = resetGameInstance(gameInstance);
                 setGameInstance(newGameInstance);
-                setWinnerDetails(null);
             }
         }
         addToast('Confirm Reset?', [toastAction]);
@@ -268,7 +271,11 @@ export default function GameScreen () {
                 <ThemedView style={styles.winnerView}>
                     { (!gameInstance.winner && 
                         !selectedMove && 
-                        !(gameInstance.gameType === GameType.Online && user && gameInstance.turnUsername() !== user.username)
+                        !(
+                            gameInstance.gameType === GameType.Online && 
+                            userRef.current && 
+                            gameInstance.turnUsername() !== userRef.current.username
+                        )
                     ) ? (
                         gameArray.some(row => row.includes(3)) ?
                         <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(false)} />
@@ -290,7 +297,11 @@ export default function GameScreen () {
                     disabled={
                         (gameInstance.isComputerTurn() || 
                         !!gameInstance.winner || 
-                        (gameInstance.gameType === GameType.Online && !!user && gameInstance.turnUsername() !== user.username)) 
+                        (
+                            gameInstance.gameType === GameType.Online && 
+                            !!userRef.current && 
+                            gameInstance.turnUsername() !== userRef.current.username
+                        )) 
                     }
                     onCellClick={handleCellClick} 
                 />

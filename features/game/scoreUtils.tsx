@@ -1,75 +1,8 @@
 import { ComputerMove } from "./models/ComputerMove"
 
-/*export function positionScore(row: number, col: number): number {
+export function prioritizeCenter(row: number, col: number): number {
     return (3 - Math.abs(3 - row)) + (3 - Math.abs(3 - col))
 }
-
-
-export function inARow(
-    gameBoard: number[][], 
-    row: number, 
-    col: number, 
-    cell: number, 
-    distance: number, 
-    weight: number
-) {
-    let score: number = 0
-    const lowThres = distance - 2
-    const highThres = 9 - distance
-    if (col > lowThres && checkDirection(gameBoard, row, col, 0, -1, cell, distance)) {
-        score += weight
-    }
-    if (col < highThres && checkDirection(gameBoard, row, col, 0, 1, cell, distance)) {
-        score += weight
-    }
-
-    if (row > lowThres) {
-        if (checkDirection(gameBoard, row, col, -1, 0, cell, distance)) {
-            score += weight
-        }
-        if (col > lowThres && checkDirection(gameBoard, row, col, -1, -1, cell, distance)) {
-            score += weight
-        }
-        if (col < highThres && checkDirection(gameBoard, row, col, -1, 1, cell, distance)) {
-            score += weight
-        }
-    }
-
-    if (row < highThres) {
-        if (checkDirection(gameBoard, row, col, 1, 0, cell, distance)) {
-            score += weight
-        }
-        if (col > lowThres && checkDirection(gameBoard, row, col, 1, -1, cell, distance)) {
-            score += weight
-        }
-        if (col < highThres && checkDirection(gameBoard, row, col, 1, 1, cell, distance)) {
-            score += weight
-        }
-    }
-
-    return score
-}
-
-
-const checkDirection = (
-    gameBoard: number[][], 
-    i: number, 
-    j: number, 
-    di: number, 
-    dj: number, 
-    cell: number, 
-    distance: number
-): boolean => {
-    for (let k = 1; k < distance; k++) {
-        const row = i + di * k;
-        const col = j + dj * k;
-
-        if (gameBoard[row][col] !== cell) {
-            return false;
-        }
-    }
-    return true;
-};*/
 
 const twoPresent = 10
 const threePresent = 200
@@ -119,8 +52,8 @@ function scoreDirection (
         const col = startCol + dCol * k
         const checkedCell = gameBoard[row][col]
         if (checkedCell === 0) {
-            const moveKey = { row: row, col: col };
-            if (availableMoves.includes(moveKey)) {
+            const move = { row: row, col: col };
+            if (availableMoves.includes(move)) {
                 blankAvailable += 1
             }
         }
@@ -146,4 +79,96 @@ function scoreDirection (
     else {
         return fourPresent
     }
+}
+
+export function scoreGroupOfFive(
+    gameBoard: number[][], 
+    row: number, 
+    col: number, 
+    playerNumber: number,
+    availableMoves: ComputerMove[]
+): number {
+    let score = 0;
+
+    if (col <= 3) {
+        score += scoreDirectionFive(gameBoard, row, col, 0, 1, playerNumber, availableMoves);
+    }
+    if (row <= 3) {
+        score += scoreDirectionFive(gameBoard, row, col, 1, 0, playerNumber, availableMoves);
+    }
+    if (row <= 3 && col <= 3) {
+        score += scoreDirectionFive(gameBoard, row, col, 1, 1, playerNumber, availableMoves);
+    }
+    if (row <=3 && col >= 3) {
+        score += scoreDirectionFive(gameBoard, row, col, 1, -1, playerNumber, availableMoves);
+    }
+
+    return score;   
+}
+
+const twoOfFive = twoPresent * 2
+const threeOfFive = threePresent * 4
+
+const edgesAvailableMultiplier = {
+    one: 1.2,
+    two: 2
+}
+
+function scoreDirectionFive(
+    gameBoard: number[][],
+    startRow: number,
+    startCol: number,
+    dRow: number,
+    dCol: number,
+    playerNumber: number,
+    availableMoves: ComputerMove[]
+): number {
+    if (gameBoard[startRow + dRow * 4][startCol + dCol * 4] !== 0) {
+        return 0
+    }
+    let firstNoticed: number | null = null;
+    let count = 0;
+
+    for (let k = 1; k < 4; k++) {
+        const row = startRow + dRow * k
+        const col = startCol + dCol * k
+        const checkedCell = gameBoard[row][col]
+        if (checkedCell === 0) {
+            continue
+        }
+        else if (firstNoticed) {
+            if (checkedCell === firstNoticed) {
+                count += 1
+            } else {
+                return 0
+            }
+        }
+        else {
+            firstNoticed = checkedCell;
+            count = 1
+        }
+    }
+
+    if (count === 0 || count === 1) {
+        return 0
+    }
+
+    const multiplier = firstNoticed === playerNumber ? 1 : -1
+    let score = count === 2 ? twoOfFive : threeOfFive
+    let edgesAvailable = 0
+    if (availableMoves.includes({ row: startRow, col: startCol })) {
+        edgesAvailable += 1
+    }
+    if (availableMoves.includes({ row: startRow + 4*dRow, col: startCol + 4*dCol })) {
+        edgesAvailable += 1
+    }
+
+    if (edgesAvailable === 1) {
+        score *= edgesAvailableMultiplier.one
+    }
+    else if (edgesAvailable === 2) {
+        score *= edgesAvailableMultiplier.two
+    }
+
+    return score * multiplier
 }

@@ -20,32 +20,32 @@ const GamePollContext = createContext<GamePollContextType>({
 });
 
 export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user, updateUserGames, updateMatchmaking } = useUser();
+  const { userRef, updateUserGames, updateMatchmaking } = useUser();
   const { logout } = useAuth();
   const { setLoading } = useLoading();
   const { addToast } = useToast();
   const { getAllGames, getMatchmaking, startMatchmaking, stopMatchmaking } = useGameService();
 
   useEffect(() => {
-    if (!user) return;
+    if (!userRef.current) return;
     const pollingGames = setInterval(() => {
       pollUserGames();
     }, 15000);
 
     return () => clearInterval(pollingGames);
-  }, [user]);
+  }, [userRef.current]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userRef.current) return;
     const pollingMatchmaking = setInterval(() => {
       pollMatchmaking();
     }, 15000);
 
     return () => clearInterval(pollingMatchmaking);
-  }, [user]);
+  }, [userRef.current]);
 
   const pollUserGames = async () => {
-    if (!user) return;
+    if (!userRef.current) return;
     try {
       const games: Game[] = await getAllGames();
       updateUserGames(games);
@@ -59,10 +59,10 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const pollMatchmaking = async () => {
-    if (!user || user.matchmaking.length == 0) return;
+    if (!userRef.current || userRef.current.matchmaking.length == 0) return;
     try {
       const updatedMatchmaking = await getMatchmaking();
-      if (!arraysAreEqual(user.matchmaking, updatedMatchmaking)) {
+      if (!arraysAreEqual(userRef.current.matchmaking, updatedMatchmaking)) {
         setLoading(true);
         updateMatchmaking(updatedMatchmaking);
         await pollUserGames();
@@ -100,7 +100,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const createMatchmaking = async (days: number) => {
     try {
-      if (!user || user.matchmaking.includes(days)){
+      if (!userRef.current || userRef.current.matchmaking.includes(days)){
         throw new Error('Invalid request')
       };
       setLoading(true);
@@ -108,7 +108,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
       if (createdGame) {
         await pollUserGames();
       } else {
-        let updatedMatchmaking: number[] = user.matchmaking
+        let updatedMatchmaking: number[] = userRef.current.matchmaking
         updatedMatchmaking.push(days)
         updateMatchmaking(updatedMatchmaking);
       }
@@ -121,12 +121,12 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const cancelMatchmaking = async (days: number) => {
     try {
-      if (!user || !user.matchmaking.includes(days)){
+      if (!userRef.current || !userRef.current.matchmaking.includes(days)){
         throw new Error('Invalid request')
       };
       setLoading(true);
       await stopMatchmaking(days);
-      const updatedMatchmaking = user.matchmaking.filter(item => item !== days);
+      const updatedMatchmaking = userRef.current.matchmaking.filter(item => item !== days);
       updateMatchmaking(updatedMatchmaking);
     } catch (error) {
       console.error("Error cancelling matchmaking: ", error);

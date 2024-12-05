@@ -19,8 +19,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 export default function PlayOnline () {
     const { routeTo, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { user } = useUser();
-    const { logout } = useAuth();
+    const { userRef } = useUser();
     const { pollUserGames, createMatchmaking, cancelMatchmaking } = useGamePoll();
     const [yourTurnGames, setYourTurnGames] = useState<Game[]>([]);
     const [theirTurnGames, setTheirTurnGames] = useState<Game[]>([]);
@@ -30,7 +29,8 @@ export default function PlayOnline () {
 
     useFocusEffect(
         React.useCallback(() => {
-            if (!user) {
+            if (!userRef.current) {
+                console.log(userRef.current);
                 routeReplace(Routes.Login);
                 return;
             }
@@ -39,12 +39,12 @@ export default function PlayOnline () {
             const theirTurn: Game[] = [];
             const completed: Game[] = [];
     
-            for (const game of user.games) {
+            for (const game of userRef.current.games) {
                 if (game.winner) {
                     completed.push(game);
                 } else if (
-                    game.player1.username === user.username && game.moves.length % 2 === 0 ||
-                    game.player2.username === user.username && game.moves.length % 2 === 1
+                    game.player1.username === userRef.current.username && game.moves.length % 2 === 0 ||
+                    game.player2.username === userRef.current.username && game.moves.length % 2 === 1
                 ) {
                     yourTurn.push(game);
                 } else {
@@ -55,7 +55,7 @@ export default function PlayOnline () {
             setYourTurnGames(yourTurn);
             setTheirTurnGames(theirTurn);
             setCompletedGames(completed);
-        }, [user])
+        }, [userRef.current])
     );
 
     interface IndividualGameProps {
@@ -64,12 +64,12 @@ export default function PlayOnline () {
 
     const IndividualGame = ({game}: IndividualGameProps) => {
         const opponentUsername: string =
-            game.player1.username === user?.username
+            game.player1.username === userRef.current?.username
             ? game.player2.username
             : game.player1.username;
 
         const opponentRating: number =
-            game.player1.username === user?.username
+            game.player1.username === userRef.current?.username
             ? game.player2.rating
             : game.player1.rating
 
@@ -82,7 +82,7 @@ export default function PlayOnline () {
             <ThemedView style={[
                 styles.gameView,
                 game.winner ?
-                    (user?.username && game.winner.split(' ')[0] == (user.username)
+                    (userRef.current?.username && game.winner.split(' ')[0] == (userRef.current.username)
                     ? { backgroundColor: Colors.onlinePlay.win }
                     : { backgroundColor: Colors.onlinePlay.loss })
                 : { backgroundColor: Colors.onlinePlay.general },
@@ -140,17 +140,14 @@ export default function PlayOnline () {
     }
 
     return (
-        <CustomHeaderView header="Play Online" goBack={() => routeReplace(Routes.HomeScreen)}>
-            <ThemedView style={{ alignItems: 'center' }}>
-                <GeneralButton title="Logout" onPress={logout} />
-            </ThemedView>
+        <CustomHeaderView header="Play Online" goBack={() => routeReplace(Routes.HomeScreen)} goProfile={true}>
             <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
                 <ThemedView style={styles.playOnlineView}>
                     <ThemedView>
                         <ThemedText type='subtitle' style={styles.gamesHeaderText}>Matchmaking</ThemedText>
                         <GeneralButton title='New Online Game' onPress={createNewGame} />
-                        { user?.matchmaking && user?.matchmaking.length > 0 ?
-                            ( user?.matchmaking.map((days) => (
+                        { userRef.current?.matchmaking && userRef.current?.matchmaking.length > 0 ?
+                            ( userRef.current?.matchmaking.map((days) => (
                                 <ThemedView style={styles.matchmakingView} key={days}>
                                     <ThemedText style={styles.matchmakingText}>
                                         {`Waiting for ${days}-day turn game...`}
