@@ -22,9 +22,10 @@ export const AuthService = {
         const headers = {
             ...HEADERS().JSON
         }
+        const urlExt = type === AuthType.Login ? URL_EXT.LOGIN : URL_EXT.REGISTER
         try {
             const response = await networkRequest(
-                URL_EXT.LOGIN, 
+                urlExt, 
                 RequestMethod.POST, 
                 headers, 
                 body

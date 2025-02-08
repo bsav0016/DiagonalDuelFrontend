@@ -78,11 +78,17 @@ export function useGameService() {
         return await GameService.stopMatchmaking(token, days);
     }
 
+    const updateComputerScore = async (computerLevel: number) => {
+        const token = await getToken();
+        return await GameService.updateComputerScore(token, computerLevel);
+    }
+
     return {
         getAllGames,
         makeMove,
         getMatchmaking,
         startMatchmaking,
-        stopMatchmaking
+        stopMatchmaking,
+        updateComputerScore
     };
 }

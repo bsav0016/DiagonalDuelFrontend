@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useState } from "react";
+import React, { RefObject, useState } from "react";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,7 +73,20 @@ export default function LoginScreen() {
                 addToast("Invalid username and password");
             }
         } catch (error) {
-            addToast(error instanceof Error ? error.message : "Unknown error");
+            let errorMessage: string;
+            if (error === "Username already taken") {
+                errorMessage = "Username already taken";
+            }
+            else if (error === "Email already taken") {
+                errorMessage = "Email already taken";
+            }
+            else if (error === "Enter a valid email") {
+                errorMessage = "Enter a valid email";
+            }
+            else {
+                errorMessage = error instanceof Error ? error.message : "Unknown error"
+            }
+            addToast(errorMessage);
         } finally {
             setProcessing(false);
         }

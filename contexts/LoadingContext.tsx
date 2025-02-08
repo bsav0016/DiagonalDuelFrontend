@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { LoadingScreen } from '@/components/LoadingScreen';
-import { Modal } from 'react-native';
 
 interface LoadingContextType {
     setLoading: (loading: boolean) => void;

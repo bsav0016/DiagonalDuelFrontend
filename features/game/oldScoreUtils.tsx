@@ -1,186 +1,14 @@
-import { checkWinner, validateMove } from "../gameUtils";
-import { scoreGroupOfFour, scoreGroupOfFive, prioritizeCenter } from "../scoreUtils";
-import { ComputerMove } from "./ComputerMove";
-import { Game } from "./Game";
-import { Move } from "./Move";
-import { Player } from "./Player";
-
-
-export class GameAI {
-    private computerLevel: number;
-    private gameBoard: number[][];
-    private player: Player;
-    private computerNumber: number;
-    private opponentNumber: number;
-    private maxRuntime: number;
-
-    constructor(computerLevel: number, gameBoard: number[][], player: Player, computerNumber: number, maxRuntime = 500) {
-        this.computerLevel = computerLevel;
-        this.gameBoard = gameBoard;
-        this.player = player
-        this.computerNumber = computerNumber;
-        this.opponentNumber = this.getOpponent(this.computerNumber);
-        this.maxRuntime = maxRuntime;
-    }
-
-    private getOpponent(playerNumber: number): number {
-        return playerNumber === 1 ? 2 : 1;
-    }
-
-    private hideValidMoves(): number[][] {
-        return this.gameBoard.map(row => row.map(cell => (cell === 3 ? 0 : cell)));
-    }
-
-    async computeMove(game: Game): Promise<{ updatedGame: Game, newMove: Move} | null> {
-        this.gameBoard = game.initializeGameArray();
-        const start = Date.now();
-        const tempBoard = this.hideValidMoves();
-
-        let chooseBestChance: number;
-        let chooseSelfChance: number;
-        if (this.computerLevel < 50) {
-            chooseBestChance = Math.ceil(this.computerLevel * 2 / 5 + 10);
-            chooseSelfChance = Math.ceil(80 - this.computerLevel * 4 / 5);
-        } else {
-            chooseBestChance = Math.ceil(this.computerLevel * 7 / 5 - 40);
-            chooseSelfChance = Math.ceil(this.computerLevel * 4 / 5);
-        }
-        const moveChoice: number = Math.random() * 100;
-        let computerMove: ComputerMove | null;
-        if (moveChoice <= chooseBestChance) {
-            [computerMove] = await this.iterativeDeepening(tempBoard);
-        }
-        else if (moveChoice <= chooseBestChance + chooseSelfChance) {
-            computerMove = this.chooseBetterBestMove(tempBoard);
-        }
-        else {
-            computerMove = this.chooseRandomMove(tempBoard);
-        }
-
-        if (!computerMove) throw new Error("Couldn't get move");
-        console.log(`AI computed move in ${Date.now() - start}ms`);
-        const move = new Move(this.player, computerMove.row, computerMove.col);
-
-        const newGame = new Game(
-            game.gameType,
-            game.gameId,
-            game.player1,
-            game.player2,
-            [...game.moves, move],
-            game.lastUpdated,
-            game.moveTime,
-            game.winner
-        )
-        return { updatedGame: newGame, newMove: move }
-    }
-
-    private async iterativeDeepening(
-        gameBoard: number[][] 
-    ): Promise<[ComputerMove | null, number]> {
-        const startTime = Date.now();
-        let bestMove: [ComputerMove | null, number] = [null, 0];
-        const maxDepth = 64 - gameBoard.flat().filter(cell => cell === 1 || cell === 2).length;
-        for (let depth = 1; depth <= maxDepth; depth++) {
-            if (this.maxRuntime - (Date.now() - startTime) < 0) {
-                break;
-            }
-            bestMove = await this.alphabeta(gameBoard, depth);
-        }
-        return bestMove;
-    }
-
-    private async alphabeta(
-        gameBoard: number[][],
-        depth: number,
-        alpha = -Infinity,
-        beta = Infinity,
-        computerTurn = true
-    ): Promise<[ComputerMove | null, number]> {
-        let availableMoves = this.getValidMoves(gameBoard);
-        if (depth === 0 || availableMoves.length === 0 || checkWinner(gameBoard)) {
-            //return [null, this.scoreBoard(gameBoard, computerNumber, availableMoves)];
-            return [null, this.scorePosition(gameBoard)];
-        }
-
-        let bestScore = computerTurn ? -Infinity : Infinity;
-        let bestMove: ComputerMove | null = null;
-
-        let availableScores: { move: ComputerMove; score: number }[] = [];
-        for (const move of availableMoves) {
-            const newGame = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);
-            const newAvailableMoves = this.getValidMoves(newGame);
-            //const score = this.scoreBoard(newGame, computerNumber, newAvailableMoves);
-            const score = this.scorePosition(newGame);
-            availableScores.push({ move, score });
-        }
-        availableScores.sort((a, b) => (computerTurn ? b.score - a.score : a.score - b.score));
-        availableMoves = availableScores.map(item => item.move);
-
-        for (const move of availableMoves) {
-            const newBoard = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);
-            const [_, score] = await this.alphabeta(newBoard, depth - 1, alpha, beta, !computerTurn);
-            if ((computerTurn && score > bestScore) || (!computerTurn && score < bestScore)) {
-                bestScore = score;
-                bestMove = move;
-            }
-            if (computerTurn) alpha = Math.max(alpha, bestScore);
-            else beta = Math.min(beta, bestScore);
-            if (beta <= alpha) break;
-        }
-
-        return [bestMove, bestScore];
-    }
-
-    private getValidMoves(gameBoard: number[][]): ComputerMove[] {
-        const valid: ComputerMove[] = [];
-        const numRows = gameBoard.length;
-        const numCols = gameBoard[0].length;
-
-        for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-            for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                if (validateMove(gameBoard, rowIndex, colIndex)) {
-                    valid.push({ row: rowIndex, col: colIndex});
-                }
+/*private winScore: number = 999999999999999;
+    private chooseRandomMove(thisArray: number[]): number {
+        let move: number = 0;
+        let chooseMove: number = 0;
+        while (chooseMove === 0) {
+            move = Math.floor(Math.random() * 88);
+            if (thisArray.includes(move)) {
+                chooseMove = 1;
             }
         }
-        return valid;
-    }
-
-    private applyMove(gameBoard: number[][], move: ComputerMove, playerNumber: number): number[][] {
-        const newGameBoard = [...gameBoard];
-        newGameBoard[move.row] = [...gameBoard[move.row]];
-        newGameBoard[move.row][move.col] = playerNumber;
-        return newGameBoard;
-    }
-
-    private scoreBoard(gameBoard: number[][], playerNumber: number, availableMoves: ComputerMove[]): number {
-        const numRows = gameBoard.length;
-        const numCols = gameBoard[0].length;
-        let totalScore = 0;
-
-        for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
-            for (let colIndex = 0; colIndex < numCols; colIndex++) {
-                const cell = gameBoard[rowIndex][colIndex];
-                if (cell === 0) {
-                    totalScore += scoreGroupOfFive(gameBoard, rowIndex, colIndex, playerNumber, availableMoves)
-                } else {
-                    const multiplier = cell === playerNumber ? 1 : -1;
-                    totalScore += prioritizeCenter(rowIndex, colIndex) * multiplier;
-                    totalScore += scoreGroupOfFour(gameBoard, rowIndex, colIndex, cell, availableMoves) * multiplier;
-                }
-            }
-        }
-
-        return totalScore;
-    }
-
-    //From Swift version
-    private winScore: number = 9999999999;
-    private playableWinScore: number = this.winScore * 99999 //TODO: Figure out how to add this in
-
-    private chooseRandomMove(gameBoard: number[][]): ComputerMove | null {
-        const availableMoves: ComputerMove[] = this.getValidMoves(gameBoard);
-        return availableMoves[Math.floor(Math.random() * availableMoves.length)]
+        return move;
     }
     
     private chooseBetterBestMove(board: number[][]): ComputerMove {
@@ -202,7 +30,7 @@ export class GameAI {
             }
         }
         const blockFour: ComputerMove | null = this.blockFourRow(board);
-        if (blockFour && Math.random() * 100 < 90 && bestValue < this.winScore / 10) {
+        if (blockFour && Math.random() * 100 < 90) {
             bestMove = blockFour;
         }
         return bestMove;
@@ -472,6 +300,4 @@ export class GameAI {
         }
     
         return score;
-    }
-    
-}
+    }*/

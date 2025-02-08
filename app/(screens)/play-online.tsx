@@ -30,7 +30,6 @@ export default function PlayOnline () {
     useFocusEffect(
         React.useCallback(() => {
             if (!userRef.current) {
-                console.log(userRef.current);
                 routeReplace(Routes.Login);
                 return;
             }

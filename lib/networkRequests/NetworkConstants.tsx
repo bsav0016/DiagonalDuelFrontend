@@ -1,8 +1,8 @@
-const DEV_ENV: Boolean = true
+const DEV_ENV: Boolean = false
 
 const URL: string = DEV_ENV 
-    ? "http://192.168.1.12:8000/"
-    : "''"
+    ? "http://192.168.1.144:8000/"
+    : "https://diagonal-duel-b86db09cf052.herokuapp.com/"
 export const DB_URL = URL + "api/"
 
 export const ACCEPTABLE_STATUS_CODES: number[] = [200, 201]
@@ -16,11 +16,13 @@ export const HEADERS = (token: string | null = null) => {
 
 export const URL_EXT = {
     LOGIN: 'login/',
+    REGISTER: 'register/',
     LOGOUT: 'logout/',
     GAMES: 'games/',
     MATCHMAKING: 'matchmaking/',
     MOVES: 'moves/',
     TOKEN: 'token/',
     TOKEN_REFRESH: 'token/refresh/',
-    LEADERBOARD: 'leaderboard/'
+    LEADERBOARD: 'leaderboard/',
+    UPDATE_COMPUTER_SCORE: 'update_computer_score/'
 }

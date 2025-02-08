@@ -163,5 +163,26 @@ export const GameService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    async updateComputerScore(token: string, computerLevel: number): Promise<void> {
+        try {
+            const headers = {
+                ...HEADERS(token).AUTH,
+                ...HEADERS(token).JSON
+            }
+            const body = JSON.stringify({
+                computer_level: computerLevel
+            })
+            await networkRequest(
+                URL_EXT.UPDATE_COMPUTER_SCORE,
+                RequestMethod.POST,
+                headers,
+                body
+            );
+            return
+        } catch (error) {
+            throw error;
+        }
     }
 }

@@ -24,9 +24,9 @@ import { ConfirmView } from "@/features/game/components/ConfirmView";
 export default function GameScreen () {
     const { routeTo, routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { userRef } = useUser();
+    const { userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
-    const { makeMove } = useGameService();
+    const { makeMove, updateComputerScore } = useGameService();
     const { pollUserGames } = useGamePoll();
 
     const params = useLocalSearchParams();
@@ -79,6 +79,17 @@ export default function GameScreen () {
             if (winner) {
                 const winnerPlayer: Player = winner.player === 1 ? gameInstance.player1 : gameInstance.player2
                 updateWinner(`${winnerPlayer.username} wins!`);
+                if (gameInstance.gameType === GameType.Computer) {
+                    const computerPlayer = gameInstance.computerPlayer();
+                    if (computerPlayer && computerPlayer !== winnerPlayer && computerPlayer.computerLevel && userRef.current) {
+                        try {
+                            updateComputerScore(computerPlayer.computerLevel);
+                            updateUserComputerScore(computerPlayer.computerLevel);
+                        } catch {
+                            console.error("Could not update user's computer score")
+                        }
+                    }
+                }
                 setWinnerDetails(winner);
             } else {
                 setHeader(() => {
@@ -99,8 +110,6 @@ export default function GameScreen () {
 
     useEffect(() => {
         const checkComputerTurn = async () => {
-            console.log(computerTurn)
-            console.log(isComputerProcessing)
             if (computerTurn && !isComputerProcessing) {
                 setIsComputerProcessing(true);
                 const compPlayer = gameInstance.computerPlayer();
@@ -116,7 +125,8 @@ export default function GameScreen () {
                         usedAI = gameAI;
                     } else {
                         const compNumber = compPlayer.username === gameInstance.player1.username ? 1 : 2
-                        usedAI = new GameAI(gameArray, compPlayer, compNumber);
+                        const computerLevel = compPlayer.computerLevel || 1;
+                        usedAI = new GameAI(computerLevel, gameArray, compPlayer, compNumber);
                         setGameAI(usedAI);
                     }
         

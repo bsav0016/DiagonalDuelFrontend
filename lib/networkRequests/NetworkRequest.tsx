@@ -16,7 +16,16 @@ export const networkRequest = async (
 
   if (!ACCEPTABLE_STATUS_CODES.includes(response.status)) {
     const errorResponse = await response.json().catch(() => ({}));
-    const message = errorResponse.error || errorResponse.detail || "Unknown error occurred";
+    let message = "Unknown error occurred";
+  
+    if (errorResponse.error) {
+      message = errorResponse.error;
+    } else if (errorResponse.detail) {
+      message = typeof errorResponse.detail === 'object' 
+        ? JSON.stringify(errorResponse.detail) 
+        : errorResponse.detail;
+    }
+    
     throw new NetworkError(message, response.status, errorResponse);
   }
 

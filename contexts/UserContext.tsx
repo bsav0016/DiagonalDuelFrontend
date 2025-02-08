@@ -8,6 +8,7 @@ interface UserContextType {
   setUser: (user: User | null) => void;
   updateUserGames: (games: Game[]) => void;
   updateMatchmaking: (matchmaking: number[]) => void;
+  updateUserComputerScore: (computerLevel: number) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -69,8 +70,21 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(updatedUser);
   };
 
+  const updateUserComputerScore = (computerLevel: number) => {
+    if (!userRef.current) return;
+    const updatedUser = new User(
+      userRef.current.username, 
+      userRef.current.email, 
+      userRef.current.games, 
+      userRef.current.matchmaking,
+      userRef.current.computerPoints + computerLevel,
+      userRef.current.onlineRating
+    );
+    setUser(updatedUser);
+  }
+
   return (
-    <UserContext.Provider value={{ userRef, setUser, updateUserGames, updateMatchmaking }}>
+    <UserContext.Provider value={{ userRef, setUser, updateUserGames, updateMatchmaking, updateUserComputerScore }}>
       {children}
     </UserContext.Provider>
   );
