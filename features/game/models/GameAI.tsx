@@ -14,10 +14,10 @@ export class GameAI {
     private opponentNumber: number;
     private maxRuntime: number;
 
-    constructor(computerLevel: number, gameBoard: number[][], player: Player, computerNumber: number, maxRuntime = 500) {
+    constructor(computerLevel: number, gameBoard: number[][], player: Player, computerNumber: number, maxRuntime = 550) {
         this.computerLevel = computerLevel;
         this.gameBoard = gameBoard;
-        this.player = player
+        this.player = player;
         this.computerNumber = computerNumber;
         this.opponentNumber = this.getOpponent(this.computerNumber);
         this.maxRuntime = maxRuntime;
@@ -97,37 +97,45 @@ export class GameAI {
         computerTurn = true
     ): Promise<[ComputerMove | null, number]> {
         let availableMoves = this.getValidMoves(gameBoard);
+    
         if (depth === 0 || availableMoves.length === 0 || checkWinner(gameBoard)) {
-            //return [null, this.scoreBoard(gameBoard, computerNumber, availableMoves)];
             return [null, this.scorePosition(gameBoard)];
         }
-
+    
         let bestScore = computerTurn ? -Infinity : Infinity;
         let bestMove: ComputerMove | null = null;
-
-        let availableScores: { move: ComputerMove; score: number }[] = [];
-        for (const move of availableMoves) {
-            const newGame = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);
-            const newAvailableMoves = this.getValidMoves(newGame);
-            //const score = this.scoreBoard(newGame, computerNumber, newAvailableMoves);
-            const score = this.scorePosition(newGame);
-            availableScores.push({ move, score });
-        }
-        availableScores.sort((a, b) => (computerTurn ? b.score - a.score : a.score - b.score));
-        availableMoves = availableScores.map(item => item.move);
-
+    
+        let scoredMoves: { move: ComputerMove; score: number }[] = [];
         for (const move of availableMoves) {
             const newBoard = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);
+            const score = this.scorePosition(newBoard);
+            scoredMoves.push({ move, score });
+        }
+    
+        scoredMoves.sort((a, b) => (computerTurn ? b.score - a.score : a.score - b.score));
+        availableMoves = scoredMoves.map(item => item.move);
+    
+        for (const move of availableMoves) {
+            const newBoard = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);    
             const [_, score] = await this.alphabeta(newBoard, depth - 1, alpha, beta, !computerTurn);
-            if ((computerTurn && score > bestScore) || (!computerTurn && score < bestScore)) {
-                bestScore = score;
-                bestMove = move;
+    
+            if (computerTurn) {
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+                alpha = Math.max(alpha, bestScore);
+            } else {
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestMove = move;
+                }
+                beta = Math.min(beta, bestScore);
             }
-            if (computerTurn) alpha = Math.max(alpha, bestScore);
-            else beta = Math.min(beta, bestScore);
+    
             if (beta <= alpha) break;
         }
-
+    
         return [bestMove, bestScore];
     }
 
@@ -185,20 +193,17 @@ export class GameAI {
     
     private chooseBetterBestMove(board: number[][]): ComputerMove {
         let bestMove: ComputerMove = {row: 0, col: 0};
-        let bestValue: number = -9999999;
+        let bestValue: number = Number.MIN_SAFE_INTEGER;
         const availableMoves: ComputerMove[] = this.getValidMoves(board);
-        let score = Number.MIN_SAFE_INTEGER;
-        for (let move = 0; move < availableMoves.length; move++) {
-            const row: number = availableMoves[move].row;
-            const col: number = availableMoves[move].col;
-            let tempBoard = [...board];
-            tempBoard[row][col] = this.computerNumber;
-            score = this.scoreBetterPosition(tempBoard);
+        for (let moveIdx = 0; moveIdx < availableMoves.length; moveIdx++) {
+            const move = availableMoves[moveIdx];
+            let tempBoard = this.applyMove(board, move, this.computerNumber);
+            let score = this.scorePosition(tempBoard);
             if (score > bestValue) {
-                bestMove = availableMoves[move];
+                bestMove = move;
                 bestValue = score;
             } else if (score === bestValue && Math.random() * 100 < 12) {
-                bestMove = availableMoves[move];
+                bestMove = move;
             }
         }
         const blockFour: ComputerMove | null = this.blockFourRow(board);
@@ -231,128 +236,95 @@ export class GameAI {
     }
     
     private evaluateWindow(window: number[]): number {
-        let score = 0;
         const howMany = window.filter(x => x === this.computerNumber).length;
         const howManyOpp = window.filter(x => x === this.opponentNumber).length;
-        const howManyEmpty = window.filter(x => x === 0).length;
-        if (howMany === 4) {
-            score += this.winScore;
-        } else if (howMany === 3 && howManyEmpty === 1) {
-            score += 25;
-        } else if (howMany === 2 && howManyEmpty === 2) {
-            score += 1;
+
+        if (howMany > 0 && howManyOpp > 0) {
+            return 0;
         }
-        if (howManyOpp === 4) {
-            score -= 2 * this.winScore;
-        } else if (howManyOpp === 3 && howManyEmpty === 1) {
-            score -= 52;
-        } else if (howManyOpp === 2 && howManyEmpty === 2) {
-            score -= 2;
+        else if (howMany === 4) {
+            return this.winScore;
+        } 
+        else if (howMany === 3) {
+            return 25;
+        } 
+        else if (howMany === 2) {
+            return 1;
         }
-        return score;
+
+        else if (howManyOpp === 4) {
+            return -2 * this.winScore;
+        } else if (howManyOpp === 3) {
+            return -52;
+        } else if (howManyOpp === 2) {
+            return -2;
+        }
+
+        return 0;
     }
 
     private evaluateWindow5(window5: number[]): number {
-        let score = 0;
         const howMany = window5.filter(piece => piece === this.computerNumber).length;
         const howManyOpp = window5.filter(piece => piece === this.opponentNumber).length;
-        const howManyEmpty = window5.filter(piece => piece === 0).length;
     
-        if (howMany === 3 && howManyEmpty === 2) {
-            score += 40;
-        } else if (howMany === 2 && howManyEmpty === 3) {
-            score += 11;
-        } else if (howMany === 1 && howManyEmpty === 4) {
-            score += 4;
+        if (howMany > 0 && howManyOpp > 0) {
+            return 0;
+        }
+        else if (howMany === 4) {
+            return 40;
+        } else if (howMany === 3) {
+            return 40;
+        } else if (howMany === 2) {
+            return 11;
+        } else if (howMany === 1) {
+            return 4;
         }
     
-        if (howManyOpp === 3 && howManyEmpty === 2) {
-            score -= 200;
-        } else if (howManyOpp === 2 && howManyEmpty === 3) {
-            score -= 15;
-        } else if (howManyOpp === 4 && howManyEmpty === 1) {
-            score -= 200;
-        } else if (howManyOpp === 1 && howManyEmpty === 4) {
-            score -= 6;
+        else if (howManyOpp === 4) {
+            return -200;
+        } else if (howManyOpp === 3) {
+            return -200;
+        } else if (howManyOpp === 2) {
+            return -15;
+        } else if (howManyOpp === 1) {
+            return -6;
         }
     
-        return score;
-    }
-    
-    private evaluateWindow5Enhanced(window5: number[]): number {
-        let score = 0;
-    
-        if (
-            window5[1] === this.computerNumber && 
-            window5[2] === this.computerNumber && 
-            window5[3] === this.computerNumber
-        ) {
-            score += 300;
-        } else if (
-            window5[1] === this.opponentNumber && 
-            window5[2] === this.opponentNumber && 
-            window5[3] === this.opponentNumber
-        ) {
-            score -= 550;
-        }
-    
-        return score;
+        return 0;
     }
     
     private scorePosition(board: number[][]): number {
         let score = 0;
-    
-        // Score horizontal
-        for (let r = 0; r <= 7; r++) {
-            const rowArray = board[r];
-            for (let c = 0; c <= 4; c++) {
-                const window = [rowArray[c], rowArray[c + 1], rowArray[c + 2], rowArray[c + 3]];
-                score += this.evaluateWindow(window);
-            }
-            for (let c = 0; c <= 3; c++) {
-                const window5 = [rowArray[c], rowArray[c + 1], rowArray[c + 2], rowArray[c + 3], rowArray[c + 4]];
-                score += this.evaluateWindow5(window5);
-            }
-        }
-    
-        // Score vertical
-        for (let c = 0; c <= 7; c++) {
-            const colArray = this.getColumn(board, c);
-            for (let r = 0; r <= 4; r++) {
-                const window = [colArray[r], colArray[r + 1], colArray[r + 2], colArray[r + 3]];
-                score += this.evaluateWindow(window);
-            }
-            for (let r = 0; r <= 3; r++) {
-                const window5 = [colArray[r], colArray[r + 1], colArray[r + 2], colArray[r + 3], colArray[r + 4]];
-                score += this.evaluateWindow5(window5);
+
+        for (let i = 0; i <= 7; i++) {
+            const rowArray = board[i]
+            const colArray = board.map(row => row[i]);
+            for (let j = 0; j <= 4; j++) {
+                const horizontalWindow = [rowArray[j], rowArray[j + 1], rowArray[j + 2], rowArray[j + 3]];
+                const verticalWindow = [colArray[j], colArray[j + 1], colArray[j + 2], colArray[j + 3]];
+                score += this.evaluateWindow(horizontalWindow);
+                score += this.evaluateWindow(verticalWindow);
+                if (j < 4) {
+                    horizontalWindow.push(rowArray[j + 4]);
+                    verticalWindow.push(colArray[j + 4]);
+                    score += this.evaluateWindow5(horizontalWindow);
+                    score += this.evaluateWindow5(verticalWindow);
+                }
             }
         }
-    
-        // Score positive sloped diagonal
+
         for (let r = 0; r <= 4; r++) {
             for (let c = 0; c <= 4; c++) {
-                const window = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3]];
-                score += this.evaluateWindow(window);
-            }
-        }
-        for (let r = 0; r <= 3; r++) {
-            for (let c = 0; c <= 3; c++) {
-                const window5 = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3], board[r + 4][c + 4]];
-                score += this.evaluateWindow5(window5);
-            }
-        }
-    
-        // Score negative sloped diagonal
-        for (let r = 0; r <= 4; r++) {
-            for (let c = 0; c <= 4; c++) {
-                const window = [board[r + 3][c], board[r + 2][c + 1], board[r + 1][c + 2], board[r][c + 3]];
-                score += this.evaluateWindow(window);
-            }
-        }
-        for (let r = 0; r <= 3; r++) {
-            for (let c = 0; c <= 3; c++) {
-                const window5 = [board[r + 4][c], board[r + 3][c + 1], board[r + 2][c + 2], board[r + 1][c + 3], board[r][c + 4]];
-                score += this.evaluateWindow5(window5);
+                const positiveDiagonalWindow = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3]];
+                let negativeDiagonalWindow = [board[r + 3][c], board[r + 2][c + 1], board[r + 1][c + 2], board[r][c + 3]];
+                score += this.evaluateWindow(positiveDiagonalWindow);
+                score += this.evaluateWindow(negativeDiagonalWindow);
+                if (c < 4 && r < 4) {
+                    positiveDiagonalWindow.push(board[r + 4][c + 4]);
+                    negativeDiagonalWindow = [board[r + 4][c], board[r + 3][c + 1], board[r + 2][c + 2], board[r + 1][c + 3], board[r][c + 4]];
+                    score += this.evaluateWindow5(positiveDiagonalWindow);
+                    score += this.evaluateWindow5(negativeDiagonalWindow);
+                }
             }
         }
     
@@ -369,86 +341,7 @@ export class GameAI {
                 }
             }
         }
-    
-        return score;
-    }
-    
-    // Helper function to extract a column from a 2D array
-    private getColumn(board: number[][], colIndex: number): number[] {
-        return board.map(row => row[colIndex]);
-    }
 
-    private scoreBetterPosition(board: number[][]): number {
-        let score: number = 0;
-    
-        // Score horizontal
-        for (let r = 0; r < 8; r++) {
-            const rowArray: number[] = board[r];
-            for (let c = 0; c < 5; c++) {
-                const window: number[] = [rowArray[c], rowArray[c + 1], rowArray[c + 2], rowArray[c + 3]];
-                score += this.evaluateWindow(window);
-            }
-            for (let c = 0; c < 4; c++) {
-                const window5: number[] = [rowArray[c], rowArray[c + 1], rowArray[c + 2], rowArray[c + 3], rowArray[c + 4]];
-                score += this.evaluateWindow5Enhanced(window5);
-            }
-        }
-    
-        // Score vertical
-        for (let c = 0; c < 8; c++) {
-            const colArray: number[] = board.map(row => row[c]);
-            for (let r = 0; r < 5; r++) {
-                const window: number[] = [colArray[r], colArray[r + 1], colArray[r + 2], colArray[r + 3]];
-                score += this.evaluateWindow(window);
-            }
-            for (let r = 0; r < 4; r++) {
-                const window5: number[] = [colArray[r], colArray[r + 1], colArray[r + 2], colArray[r + 3], colArray[r + 4]];
-                score += this.evaluateWindow5Enhanced(window5);
-            }
-        }
-    
-        // Score positive sloped diagonal
-        for (let r = 0; r < 5; r++) {
-            for (let c = 0; c < 5; c++) {
-                const window: number[] = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3]];
-                score += this.evaluateWindow(window);
-            }
-        }
-        for (let r = 0; r < 4; r++) {
-            for (let c = 0; c < 4; c++) {
-                const window5: number[] = [board[r][c], board[r + 1][c + 1], board[r + 2][c + 2], board[r + 3][c + 3], board[r + 4][c + 4]];
-                score += this.evaluateWindow5Enhanced(window5);
-            }
-        }
-    
-        // Score negative sloped diagonal
-        for (let r = 0; r < 5; r++) {
-            for (let c = 0; c < 5; c++) {
-                const window: number[] = [board[r + 3][c], board[r + 2][c + 1], board[r + 1][c + 2], board[r][c + 3]];
-                score += this.evaluateWindow(window);
-            }
-        }
-        for (let r = 0; r < 4; r++) {
-            for (let c = 0; c < 4; c++) {
-                const window5: number[] = [board[r + 4][c], board[r + 3][c + 1], board[r + 2][c + 2], board[r + 1][c + 3], board[r][c + 4]];
-                score += this.evaluateWindow5Enhanced(window5);
-            }
-        }
-    
-        // Score centers
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                if (board[r][c] === this.computerNumber) {
-                    const subValue: number = Math.abs(r - 3.5) + Math.abs(c - 3.5);
-                    score += 5 * (8 - Math.floor(subValue));
-                }
-                if (board[r][c] === this.opponentNumber) {
-                    const subValue: number = Math.abs(r - 3.5) + Math.abs(c - 3.5);
-                    score -= 5 * (8 - Math.floor(subValue));
-                }
-            }
-        }
-    
         // Score open options
         for (let r = 1; r < 7; r++) {
             for (let c = 1; c < 7; c++) {

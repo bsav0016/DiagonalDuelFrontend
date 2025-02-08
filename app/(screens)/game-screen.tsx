@@ -140,6 +140,7 @@ export default function GameScreen () {
                         setHeader("Player wins by default!")
                     }
                 } catch (error) {
+                    console.error(error);
                     addToast("Unexpected error. Please restart game.")
                 } finally {
                     setIsComputerProcessing(false);
