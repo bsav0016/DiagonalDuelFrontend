@@ -1,9 +1,13 @@
-const DEV_ENV: Boolean = false
+export const PRODUCTION_URL: string = "https://diagonal-duel-b86db09cf052.herokuapp.com/"
 
-const URL: string = DEV_ENV 
-    ? "http://192.168.1.144:8000/"
-    : "https://diagonal-duel-b86db09cf052.herokuapp.com/"
-export const DB_URL = URL + "api/"
+// Set EXPO_PUBLIC_API_URL (e.g. in .env) to use another backend such as a local server.
+// When it is not set, the app talks to the hosted production server.
+export function resolveApiUrl(configuredUrl: string | undefined): string {
+    const base = configuredUrl && configuredUrl.trim() ? configuredUrl.trim() : PRODUCTION_URL
+    return (base.endsWith("/") ? base : base + "/") + "api/"
+}
+
+export const DB_URL = resolveApiUrl(process.env.EXPO_PUBLIC_API_URL)
 
 export const ACCEPTABLE_STATUS_CODES: number[] = [200, 201]
 

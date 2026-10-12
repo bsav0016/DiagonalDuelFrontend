@@ -47,7 +47,20 @@ npm start            # expo start
 npm run android      # or npm run ios / npm run web
 ```
 
-Computer and 2-player modes run entirely on the device. Accounts, online play and the leaderboard need the backend. The backend address is set in `lib/networkRequests/NetworkConstants.tsx`: `DEV_ENV` is `false`, so the app talks to the hosted production server. To use a local backend, set `DEV_ENV` to `true` and change the development URL to your machine's address.
+Computer and 2-player modes run entirely on the device. Accounts, online play and the leaderboard need the backend.
+
+### Choosing a backend
+
+By default the app talks to the hosted production server. To use a local backend (see the [backend repo](https://github.com/bsav0016/DiagonalDuelBackend)), copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to your computer's address, for example `http://192.168.0.10:8000/` (the Android emulator can use `http://10.0.2.2:8000/`), then restart `npm start`. No source edits are needed. `.env` is gitignored; values prefixed `EXPO_PUBLIC_` are bundled into the app, so never put secrets in it.
+
+### Tests and checks
+
+```bash
+npm test             # run the Jest suite once (npm run test:watch to watch)
+npm run typecheck    # tsc --noEmit
+```
+
+The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) and backend URL selection.
 
 ## Design decisions
 
@@ -57,7 +70,9 @@ Computer and 2-player modes run entirely on the device. Accounts, online play an
 
 ## Limitations
 
-- Only a placeholder snapshot test exists (`components/__tests__`); the game logic has no automated tests.
+- The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
+- Neither the client nor the server detects a draw: if all 64 cells fill with no four in a row, the game does not end.
+- The computer opponent's "block four in a row" step and its open-edge scoring never take effect: they compare freshly created `{ row, col }` objects with `includes`, which is always false (`GameAI.blockFourRow`, `scoreUtils`). Fixing it would make the computer stronger at every level, so it is left as is for now.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 - <!-- TODO: is the hosted backend still running? Last upstream commit before this work was Feb 2025. -->
 
