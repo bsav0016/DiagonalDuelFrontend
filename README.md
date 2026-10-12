@@ -60,3 +60,7 @@ Computer and 2-player modes run entirely on the device. Accounts, online play an
 - Only a placeholder snapshot test exists (`components/__tests__`); the game logic has no automated tests.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 - <!-- TODO: is the hosted backend still running? Last upstream commit before this work was Feb 2025. -->
+
+## License
+
+MIT. See [LICENSE](LICENSE).
