@@ -6,15 +6,13 @@ A two-player strategy board game for iOS and Android. Players take turns placing
 
 ## Why it exists
 
-<!-- TODO: in your own words, why you built it (the story behind the game and its name) -->
+Most board games need two people in the same room at the same time. Diagonal Duel is a short four-in-a-row game that works whenever you want to play: against the computer at any difficulty from 0 to 100, pass-and-play on one device, or online against another player, where each move has a time limit (a day by default) so neither player has to be online at the same moment.
 
 ## The rules
 
 - The board is 8×8 and the two players alternate turns, one piece per turn.
 - A piece can only be placed on a square that is **connected to the pieces already in play**: any square in the first row or first column, or a square that touches an existing piece diagonally up-left, directly above, or directly left of it. Pieces therefore grow out from the top-left corner, and "Show Valid Moves" highlights the legal squares.
 - Four of your pieces in a straight line – row, column or diagonal – wins.
-
-<!-- TODO: add anything the code doesn't show – how the name "Diagonal Duel" came about, strategy tips, who moves first online -->
 
 ## Game modes
 
@@ -77,7 +75,6 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 - A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
 - The scoring helpers in `features/game/scoreUtils.tsx` (and `scoreBoard` in `GameAI`) are not used by the AI, which scores positions with `scorePosition`; they also contain the same object-comparison mistake that `blockFourRow` had.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
-- <!-- TODO: is the hosted backend still running? Last upstream commit before this work was Feb 2025. -->
 
 ## License
 
