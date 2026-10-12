@@ -39,6 +39,21 @@ export function hideValidMoves(gameBoard: number[][]) {
     );
 }
 
+export const DRAW_TEXT = "Draw";
+
+/** True when every cell holds a piece. Valid-move markers (3) do not count as pieces. */
+export function isBoardFull(gameBoard: number[][]): boolean {
+    return gameBoard.every(row => row.every(cell => cell === 1 || cell === 2));
+}
+
+/**
+ * The game is a draw when the board is full and nobody has four in a row. A board that is not full
+ * always has a playable cell, so a full board is the only way for the game to run out of moves.
+ */
+export function isDraw(gameBoard: number[][]): boolean {
+    return isBoardFull(gameBoard) && checkWinner(gameBoard) === null;
+}
+
 export interface WinnerInterface {
     player: number;
     startRow: number;

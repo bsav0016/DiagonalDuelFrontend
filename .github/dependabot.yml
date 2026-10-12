@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  # Expo and React Native versions must stay matched to the Expo SDK (use `npx expo install --fix`),
+  # so routine version bumps are off. Security updates still open pull requests.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

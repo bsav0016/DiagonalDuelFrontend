@@ -11,7 +11,7 @@ import { useGamePoll } from "@/contexts/GamePollContext";
 import { Routes } from "./Routes";
 import { GameBoard } from "@/features/game/components/GameBoard";
 import { StyleSheet } from "react-native";
-import { checkWinner, getAllValidMoves, hideValidMoves, resetGameInstance, validateMove, WinnerInterface } from "@/features/game/gameUtils";
+import { checkWinner, DRAW_TEXT, getAllValidMoves, hideValidMoves, isDraw, resetGameInstance, validateMove, WinnerInterface } from "@/features/game/gameUtils";
 import { GeneralButton } from "@/components/GeneralButton";
 import { Move } from "@/features/game/models/Move";
 import { GameType } from "@/features/game/models/GameType";
@@ -22,21 +22,34 @@ import { ConfirmView } from "@/features/game/components/ConfirmView";
 
 
 export default function GameScreen () {
+    const { routeTo } = useRouteTo();
+    const { addToast } = useToast();
+
+    const params = useLocalSearchParams();
+    const gameParam = params.game as string | undefined;
+    const parsedGame = gameParam ? JSON.parse(decodeURIComponent(gameParam)) : null;
+
+    useEffect(() => {
+        if (!parsedGame) {
+            addToast('Could not load game');
+            routeTo(Routes.HomeScreen);
+        }
+    }, []);
+
+    if (!parsedGame) {
+        return null;
+    }
+
+    return <GameScreenContent parsedGame={parsedGame} />;
+}
+
+function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const { routeTo, routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
     const { userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
     const { makeMove, updateComputerScore } = useGameService();
     const { pollUserGames } = useGamePoll();
-
-    const params = useLocalSearchParams();
-    const gameParam = params.game as string | undefined;
-    const parsedGame = gameParam ? JSON.parse(decodeURIComponent(gameParam)) : null;
-    if (!parsedGame) {
-        addToast('Could not load game');
-        routeTo(Routes.HomeScreen);
-        return null;
-    }
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
     const [header, setHeader] = useState<string>(() => {
@@ -91,6 +104,8 @@ export default function GameScreen () {
                     }
                 }
                 setWinnerDetails(winner);
+            } else if (isDraw(newGameArray)) {
+                updateWinner(DRAW_TEXT);
             } else {
                 setHeader(() => {
                     if (gameInstance.moves.length % 2 === 0) {
@@ -102,7 +117,7 @@ export default function GameScreen () {
             }
 
             setGameArray(newGameArray);
-            if (!winner) {
+            if (!winner && !isDraw(newGameArray)) {
                 setComputerTurn(gameInstance.isComputerTurn());
             }
         }

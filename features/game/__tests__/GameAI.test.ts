@@ -2,7 +2,7 @@ import { validateMove } from "../gameUtils";
 import { GameAI } from "../models/GameAI";
 import { GameType } from "../models/GameType";
 import { Player } from "../models/Player";
-import { Cell, gameWithMoves } from "../testUtils";
+import { boardWith, Cell, emptyBoard, gameWithMoves } from "../testUtils";
 
 // Short search budget keeps the suite fast; the cases below only need a shallow search.
 const FAST = 150;
@@ -98,5 +98,32 @@ describe("GameAI.computeMove", () => {
         const { newMove } = (await ai.computeMove(game))!;
 
         expect([newMove.row, newMove.column]).toEqual([0, 3]);
+    });
+});
+
+describe("GameAI.blockFourRow", () => {
+    const blockFourRow = (ai: GameAI, board: number[][]) => (ai as any).blockFourRow(board);
+    const ai = new GameAI(50, [], computerAs(50), 2, FAST);
+
+    it("returns the playable cell that completes the opponent's row of three", () => {
+        // Player 1 (opponent of computer player 2) holds (4,0)-(4,2); (3,3) supports (4,3).
+        const board = boardWith({ 1: [[4, 0], [4, 1], [4, 2], [3, 3]] });
+        expect(blockFourRow(ai, board)).toEqual({ row: 4, col: 3 });
+    });
+
+    it("finds the gap when the three have a hole in them", () => {
+        const board = boardWith({ 1: [[0, 0], [0, 1], [0, 3]] });
+        expect(blockFourRow(ai, board)).toEqual({ row: 0, col: 2 });
+    });
+
+    it("does not suggest a window that the computer has already blocked", () => {
+        const board = boardWith({ 1: [[0, 0], [0, 1], [0, 2]], 2: [[0, 3]] });
+        expect(blockFourRow(ai, board)).toBeNull();
+    });
+
+    it("ignores rows that are not a threat", () => {
+        expect(blockFourRow(ai, boardWith({ 1: [[0, 0], [0, 1]] }))).toBeNull();
+        expect(blockFourRow(ai, boardWith({ 2: [[0, 0], [0, 1], [0, 2]] }))).toBeNull();
+        expect(blockFourRow(ai, emptyBoard())).toBeNull();
     });
 });

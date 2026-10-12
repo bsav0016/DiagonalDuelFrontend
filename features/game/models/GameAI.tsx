@@ -224,8 +224,8 @@ export class GameAI {
                 const howManyEmpty = window.filter(x => x === 0).length;
                 if (howMany === 3 && howManyEmpty === 1) {
                     for (let i = 0; i < 4; i++) {
-                        const blockMove = {row: r, col: c};
-                        if (rowArray[c + i] === 0 && availableMoves.includes(blockMove)) {
+                        const blockMove = {row: r, col: c + i};
+                        if (rowArray[c + i] === 0 && availableMoves.some(m => m.row === blockMove.row && m.col === blockMove.col)) {
                             blockFour = blockMove;
                         }
                     }
