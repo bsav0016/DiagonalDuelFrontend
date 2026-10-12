@@ -2,6 +2,8 @@ import {
     checkWinner,
     getAllValidMoves,
     hideValidMoves,
+    isBoardFull,
+    isDraw,
     resetGameInstance,
     validateMove,
 } from "../gameUtils";
@@ -178,5 +180,40 @@ describe("resetGameInstance", () => {
         expect(fresh).toBeInstanceOf(Game);
         expect(fresh).not.toBe(old);
         expect(old.moves).toHaveLength(1);
+    });
+});
+
+describe("draw detection", () => {
+    const row = [1, 1, 2, 2, 1, 1, 2, 2];
+    const other = [2, 2, 1, 1, 2, 2, 1, 1];
+    const drawnBoard = [row, other, row, other, row, other, row, other];
+
+    it("a full board with no four in a row is a draw", () => {
+        expect(isBoardFull(drawnBoard)).toBe(true);
+        expect(isDraw(drawnBoard)).toBe(true);
+    });
+
+    it("an empty or partly filled board is not a draw", () => {
+        expect(isBoardFull(emptyBoard())).toBe(false);
+        expect(isDraw(emptyBoard())).toBe(false);
+
+        const almost = drawnBoard.map(r => [...r]);
+        almost[7][7] = 0;
+        expect(isBoardFull(almost)).toBe(false);
+        expect(isDraw(almost)).toBe(false);
+    });
+
+    it("a valid-move marker (3) does not count as a filled cell", () => {
+        const marked = drawnBoard.map(r => [...r]);
+        marked[7][7] = 3;
+        expect(isBoardFull(marked)).toBe(false);
+    });
+
+    it("a full board that contains four in a row is a win, not a draw", () => {
+        const won = drawnBoard.map(r => [...r]);
+        won[0] = [1, 1, 1, 1, 2, 2, 1, 1];
+        expect(isBoardFull(won)).toBe(true);
+        expect(checkWinner(won)?.player).toBe(1);
+        expect(isDraw(won)).toBe(false);
     });
 });

@@ -58,7 +58,10 @@ By default the app talks to the hosted production server. To use a local backend
 ```bash
 npm test             # run the Jest suite once (npm run test:watch to watch)
 npm run typecheck    # tsc --noEmit
+npm run lint         # ESLint (expo config); errors fail CI, warnings do not
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the type check, lint, the tests and an Android JavaScript bundle export (`npx expo export --platform android`) on every pull request and on pushes to `master`. It does not build or release the app; EAS builds are separate.
 
 The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) and backend URL selection.
 
@@ -71,8 +74,8 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 ## Limitations
 
 - The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
-- Neither the client nor the server detects a draw: if all 64 cells fill with no four in a row, the game does not end.
-- The computer opponent's "block four in a row" step and its open-edge scoring never take effect: they compare freshly created `{ row, col }` objects with `includes`, which is always false (`GameAI.blockFourRow`, `scoreUtils`). Fixing it would make the computer stronger at every level, so it is left as is for now.
+- A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
+- The scoring helpers in `features/game/scoreUtils.tsx` (and `scoreBoard` in `GameAI`) are not used by the AI, which scores positions with `scorePosition`; they also contain the same object-comparison mistake that `blockFourRow` had.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 - <!-- TODO: is the hosted backend still running? Last upstream commit before this work was Feb 2025. -->
 
