@@ -1,13 +1,24 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet } from "react-native";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "@/app/(screens)/Routes";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { GeneralButton } from "@/components/GeneralButton";
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
+
 
 export default function HomeScreen() {
   const { routeTo } = useRouteTo();
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await requestTrackingPermissionsAsync();
+      if (status === 'granted') {
+        console.log('Granted permissions');
+      }
+    })();
+  }, []);
 
   const homeButtons = [
     { title: "Play Computer", route: Routes.PlayComputer },
