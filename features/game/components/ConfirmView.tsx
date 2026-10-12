@@ -14,9 +14,8 @@ export function ConfirmView({ onPressYes, onPressNo }: ConfirmViewProps) {
             <ThemedText style={styles.confirmText}>
                 Confirm Move?
             </ThemedText>
-            <GeneralButton title="Yes" onPress={onPressYes} 
-            />
-            <GeneralButton title="No" onPress={onPressNo} />
+            <GeneralButton title="Yes" onPress={onPressYes} fontSize={18} />
+            <GeneralButton title="No" onPress={onPressNo} fontSize={18} variant="secondary" />
         </ThemedView>
     )
 }
@@ -26,11 +25,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 3,
+        gap: 6,
         marginTop: 10
     },
 
     confirmText: {
-        marginRight: 20
+        marginRight: 14,
+        fontWeight: '600'
     }
 })

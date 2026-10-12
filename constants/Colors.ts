@@ -1,15 +1,17 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Colors used in the app, defined for light and dark mode.
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+const tintColorLight = '#4263eb';
+const tintColorDark = '#748ffc';
 
 export const Colors = {
   light: {
     text: '#11181C',
-    background: '#fff',
+    background: '#f5f7fb',
+    surface: '#ffffff',
+    border: '#e3e7ef',
+    muted: '#6b7280',
     tint: tintColorLight,
     icon: '#687076',
     tabIconDefault: '#687076',
@@ -17,7 +19,10 @@ export const Colors = {
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
+    background: '#0f1115',
+    surface: '#1a1d24',
+    border: '#2a2f3a',
+    muted: '#9ca3af',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
@@ -25,15 +30,16 @@ export const Colors = {
   },
   button: {
     text: 'white',
-    background: '#007bff'
+    background: '#4263eb',
+    disabled: '#c5cad6',
   },
   board: {
-    background: '#0000aa',
-    player1: 'red',//'#d96c6c',
-    player2: 'yellow',//'#27b84d',
+    background: '#1b2487',
+    player1: '#ef4444',
+    player2: '#facc15',
     valid: '#9127b8',
-    empty: '#007bff',
-    borderColor: '#0000dd'
+    empty: '#3b82f6',
+    borderColor: '#2b36b8'
   },
   onlinePlay: {
     general: '#9127b8',
