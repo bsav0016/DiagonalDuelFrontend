@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode, useEffect, useRef } from 'react';
+import React, { createContext, ReactNode, useEffect, useRef } from 'react';
 import { Game } from '@/features/game/models/Game';
 import { User } from '@/features/auth/User';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
+import React, { createContext, useEffect, useRef, ReactNode } from 'react';
 import { AuthService } from '@/features/auth/AuthService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NetworkError } from '@/lib/networkRequests/NetworkError';
