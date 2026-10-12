@@ -12,10 +12,14 @@ import { Game } from "@/features/game/models/Game";
 import { GameType } from "@/features/game/models/GameType";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "./Routes";
+import { Colors } from "@/constants/Colors";
 
 
 export default function PlayComputer () {
     const color = useThemeColor({}, 'text');
+    const surface = useThemeColor({}, 'surface');
+    const border = useThemeColor({}, 'border');
+    const muted = useThemeColor({}, 'muted');
     const [level, setLevel] = useState('0');
     const { addToast } = useToast();
     const { routeTo } = useRouteTo();
@@ -67,36 +71,47 @@ export default function PlayComputer () {
     return (
         <CustomHeaderView header="Play Computer">
             <ThemedView style={styles.twoPlayerButtonView}>
-                <GeneralButton 
-                    title="2 Player Game" 
-                    onPress={startLocalGame} 
-                />
-                
-            </ThemedView>
-            <ThemedView style={styles.playComputerView}>
-                <ThemedView style={styles.levelView}>
-                    <ThemedText>
-                        Level:
-                    </ThemedText>
-                    <TextInput
-                        style={[styles.input, { borderColor: color, color: color }]}
-                        value={String(level)}
-                        onChangeText={handleLevelInput}
-                        keyboardType="numeric"
+                <ThemedView style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
+                    <ThemedText style={[styles.cardTitle, { color: muted }]}>SAME DEVICE</ThemedText>
+                    <GeneralButton
+                        title="2 Player Game"
+                        onPress={startLocalGame}
+                        autoWidth={false}
+                        variant="secondary"
                     />
                 </ThemedView>
-                <Slider
-                    style={styles.slider}
-                    minimumValue={0}
-                    maximumValue={100}
-                    step={1}
-                    value={levelNumber}
-                    onValueChange={(value) => setLevelSlider(value)}
-                />
-                <GeneralButton
-                    title="Start Computer Game"
-                    onPress={startComputerGame}
-                />
+            </ThemedView>
+            <ThemedView style={styles.playComputerView}>
+                <ThemedView style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
+                    <ThemedText style={[styles.cardTitle, { color: muted }]}>AGAINST THE COMPUTER</ThemedText>
+                    <ThemedView style={[styles.levelView, { backgroundColor: surface }]}>
+                        <ThemedText style={{ backgroundColor: surface }}>
+                            Level:
+                        </ThemedText>
+                        <TextInput
+                            style={[styles.input, { borderColor: border, color: color, backgroundColor: surface }]}
+                            value={String(level)}
+                            onChangeText={handleLevelInput}
+                            keyboardType="numeric"
+                        />
+                    </ThemedView>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={100}
+                        step={1}
+                        value={levelNumber}
+                        onValueChange={(value) => setLevelSlider(value)}
+                        minimumTrackTintColor={Colors.button.background}
+                        thumbTintColor={Colors.button.background}
+                        maximumTrackTintColor="#c3cadb"
+                    />
+                    <GeneralButton
+                        title="Start Computer Game"
+                        onPress={startComputerGame}
+                        autoWidth={false}
+                    />
+                </ThemedView>
             </ThemedView>
         </CustomHeaderView>
     )
@@ -106,30 +121,57 @@ const styles = StyleSheet.create({
     twoPlayerButtonView: {
       flex: 2,
       justifyContent: 'center',
-      alignItems: 'center'
+      alignItems: 'center',
+      paddingHorizontal: 20
     },
 
     playComputerView: {
         flex: 3,
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingHorizontal: 40
+        paddingHorizontal: 20
+    },
+
+    card: {
+        width: '100%',
+        borderRadius: 20,
+        borderWidth: 1,
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        alignItems: 'center',
+        shadowColor: '#1c2a6b',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 2,
+    },
+
+    cardTitle: {
+        width: '100%',
+        textAlign: 'left',
+        fontSize: 13,
+        fontWeight: '700',
+        letterSpacing: 0.8,
+        marginBottom: 8,
     },
 
     levelView: {
-        flexDirection: 'row'
+        flexDirection: 'row',
+        alignItems: 'center'
     },
 
     input: {
         marginLeft: 10,
-        width: 50,
-        borderWidth: 1,
-        borderRadius: 5,
+        width: 64,
+        height: 44,
+        borderWidth: 1.5,
+        borderRadius: 12,
         textAlign: 'center',
         fontSize: 20
     },
 
     slider: {
-        width: '100%'
+        width: '100%',
+        marginVertical: 6
     }
   })

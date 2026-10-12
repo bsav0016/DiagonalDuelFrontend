@@ -289,9 +289,9 @@ export default function GameScreen () {
                         )
                     ) ? (
                         gameArray.some(row => row.includes(3)) ?
-                        <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(false)} />
+                        <GeneralButton title='Hide Valid Moves' onPress={() => updateAvailableMoves(false)} variant='secondary' fontSize={17} />
                         :
-                        <GeneralButton title='Show Valid Moves' onPress={() => updateAvailableMoves(true)} />
+                        <GeneralButton title='Show Valid Moves' onPress={() => updateAvailableMoves(true)} variant='secondary' fontSize={17} />
                     ) :
                     null
                     }
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     },
 
     winnerView: {
-        height: 50,
-        marginBottom: 50
+        height: 60,
+        marginBottom: 40
     },
 })
