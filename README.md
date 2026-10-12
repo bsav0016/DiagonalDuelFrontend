@@ -2,7 +2,7 @@
 
 A two-player strategy board game for iOS and Android. Players take turns placing pieces on an 8×8 board, and the first to line up **four in a row** – horizontally, vertically or diagonally – wins. Play a computer opponent at any of 101 difficulty levels, a friend on the same device, or a rated online opponent.
 
-<!-- TODO: add screenshots (home screen, game board, leaderboard) -->
+<p><img src="docs/screenshots/home.png" alt="Home screen" width="260"> <img src="docs/screenshots/board.png" alt="Game board with valid moves shown" width="260"></p>
 
 ## Why it exists
 
