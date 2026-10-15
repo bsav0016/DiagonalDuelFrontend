@@ -73,7 +73,6 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 
 - The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
 - A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
-- `features/game/scoreUtils.tsx` and `GameAI.scoreBoard` are leftovers from an earlier scoring approach that the search no longer calls, and `scoreUtils` has an object-comparison bug (`availableMoves.includes({ ... })` can never match). `features/game/oldScoreUtils.tsx` is entirely commented out. They should be deleted rather than fixed.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 
 ## License
