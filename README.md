@@ -25,13 +25,13 @@ Most board games need two people in the same room at the same time. Diagonal Due
 ## Stack
 
 - React Native 0.76 / Expo SDK 52, TypeScript, Expo Router
-- Talks to [DiagonalDuelBackend](https://github.com/bsav0016/DiagonalDuelBackend) (Django REST) for accounts, matchmaking, game state and leaderboards
+- Talks to a Django REST API (private repository) for accounts, matchmaking, game state and leaderboards
 
 ## How the computer opponent works
 
 `features/game/models/GameAI.tsx` blends three kinds of move, with probabilities that depend on the level:
 
-- an **alpha-beta search with iterative deepening**, capped at about 550 ms per move, scored by a heuristic that rewards two-, three- and four-in-a-row (`features/game/scoreUtils.tsx`) and prefers central squares;
+- an **alpha-beta search with iterative deepening**, capped at about 550 ms per move, scored by `GameAI.scorePosition`, which evaluates every four- and five-cell window in rows, columns and both diagonals, adds a bonus for central squares, and counts neighbouring own pieces and open squares;
 - a **one-move heuristic** pick;
 - a **random legal move**.
 
@@ -49,7 +49,7 @@ Computer and 2-player modes run entirely on the device. Accounts, online play an
 
 ### Choosing a backend
 
-By default the app talks to the hosted production server. To use a local backend (see the [backend repo](https://github.com/bsav0016/DiagonalDuelBackend)), copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to your computer's address, for example `http://192.168.0.10:8000/` (the Android emulator can use `http://10.0.2.2:8000/`), then restart `npm start`. No source edits are needed. `.env` is gitignored; values prefixed `EXPO_PUBLIC_` are bundled into the app, so never put secrets in it.
+By default the app talks to the hosted production server. To point it at another server (the backend is a private repository), copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to your computer's address, for example `http://192.168.0.10:8000/` (the Android emulator can use `http://10.0.2.2:8000/`), then restart `npm start`. No source edits are needed. `.env` is gitignored; values prefixed `EXPO_PUBLIC_` are bundled into the app, so never put secrets in it.
 
 ### Tests and checks
 
@@ -73,7 +73,7 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 
 - The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
 - A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
-- The scoring helpers in `features/game/scoreUtils.tsx` (and `scoreBoard` in `GameAI`) are not used by the AI, which scores positions with `scorePosition`; they also contain the same object-comparison mistake that `blockFourRow` had.
+- `features/game/scoreUtils.tsx` and `GameAI.scoreBoard` are leftovers from an earlier scoring approach that the search no longer calls, and `scoreUtils` has an object-comparison bug (`availableMoves.includes({ ... })` can never match). `features/game/oldScoreUtils.tsx` is entirely commented out. They should be deleted rather than fixed.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 
 ## License
