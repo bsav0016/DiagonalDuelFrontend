@@ -38,6 +38,7 @@ export function PlayerChips({ player1Name, player2Name, activePlayer }: PlayerCh
 
 const styles = StyleSheet.create({
     row: {
+        width: '100%',
         flexDirection: 'row',
         justifyContent: 'center',
         gap: 12,
