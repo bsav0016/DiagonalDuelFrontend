@@ -63,6 +63,23 @@ export const AuthService = {
             console.error("Error during logout:", error);
             throw(error);
         }
+    },
+
+    // Returns false when the password is wrong, true once the account has been deleted.
+    async deleteAccount(token: string, password: string): Promise<boolean> {
+        try {
+            await networkRequest(
+                URL_EXT.ACCOUNT,
+                RequestMethod.DELETE,
+                { ...HEADERS(token).AUTH, ...HEADERS().JSON },
+                JSON.stringify({ password })
+            );
+            return true;
+        } catch (error) {
+            if (error instanceof NetworkError && error.status === 403) {
+                return false;
+            }
+            throw error;
+        }
     }
-      
 }
