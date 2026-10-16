@@ -5,7 +5,6 @@ import { StyleSheet, View, TouchableOpacity, Dimensions } from "react-native";
 import { Move } from "../models/Move";
 import { ThemedText } from "@/components/ThemedText";
 import Svg, { Line } from 'react-native-svg';
-import { GeneralButton } from "@/components/GeneralButton";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { Colors } from "@/constants/Colors";
 import { WinnerInterface } from "../gameUtils";
@@ -18,7 +17,6 @@ interface GameBoardProps {
     winnerDetails: WinnerInterface | null;
     disabled: boolean;
     onCellClick: (row: number, col: number) => void;
-    resetClicked: (() => void) | null;
     timeExpired: (() => Promise<void>) | null;
 }
 
@@ -30,7 +28,6 @@ export function GameBoard({
     winnerDetails,
     disabled,
     onCellClick,
-    resetClicked,
     timeExpired
 }: GameBoardProps) {
     const textColor = useThemeColor({}, 'text');
@@ -88,16 +85,6 @@ export function GameBoard({
                     </ThemedText>
                     <CountdownTimer timeRemaining={time} whenZero={timeExpired} color={textColor}/>
                 </ThemedView>
-            }
-            { resetClicked &&
-                <ThemedView style={[styles.time, {marginRight: 60}]}>
-                    <GeneralButton 
-                        title='Reset Board' 
-                        onPress={resetClicked}
-                        fontSize={16} 
-                    />
-                </ThemedView>
-
             }
         </ThemedView>
     );

@@ -19,6 +19,7 @@ import { Player } from "@/features/game/models/Player";
 import { useGameService } from "@/hooks/useGameService";
 import { GameAI } from "@/features/game/models/GameAI";
 import { ConfirmView } from "@/features/game/components/ConfirmView";
+import { PlayerChips } from "@/features/game/components/PlayerChips";
 
 
 export default function GameScreen () {
@@ -294,6 +295,11 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     return (
         <CustomHeaderView header={header}>
             <ThemedView style={styles.gameBoard}>
+                <PlayerChips
+                    player1Name={gameInstance.player1.username}
+                    player2Name={gameInstance.player2.username}
+                    activePlayer={gameInstance.winner || isDraw(gameArray) ? null : (gameInstance.moves.length % 2 === 0 ? 1 : 2)}
+                />
                 <ThemedView style={styles.winnerView}>
                     { (!gameInstance.winner && 
                         !selectedMove && 
@@ -318,7 +324,6 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                     lastMove={lastMove}
                     time={gameInstance.gameType === GameType.Online && !gameInstance.winner ? timeRemaining : null}
                     winnerDetails={winnerDetails}
-                    resetClicked={resetBoard}
                     timeExpired={timeExpired}
                     disabled={
                         (gameInstance.isComputerTurn() || 
@@ -331,6 +336,9 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                     }
                     onCellClick={handleCellClick} 
                 />
+                { resetBoard &&
+                    <GeneralButton title='Reset Board' onPress={resetBoard} variant='secondary' fontSize={16} />
+                }
             </ThemedView>
             { displayConfirm &&
             <ConfirmView onPressYes={onPressYes} onPressNo={onPressNo} />
@@ -347,6 +355,7 @@ const styles = StyleSheet.create({
 
     winnerView: {
         height: 60,
-        marginBottom: 40
+        marginTop: 16,
+        marginBottom: 24
     },
 })
