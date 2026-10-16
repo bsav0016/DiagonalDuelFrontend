@@ -11,6 +11,9 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "24",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
       "bundleIdentifier": "com.BrianSavidgeApps.Diagonal-Two-Squared"
     },
     "android": {

@@ -4,6 +4,8 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 
+const PRIVACY_POLICY_URL = "https://diagonaltwosquared.weebly.com/privacy-policy.html";
+
 export default function Support () {
     const openEmail = () => {
         const email = "savidgeapps@gmail.com";
@@ -11,6 +13,12 @@ export default function Support () {
         const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
         Linking.openURL(mailto).catch((err) =>
             console.error("Failed to open mail app", err)
+        );
+    };
+
+    const openPrivacyPolicy = () => {
+        Linking.openURL(PRIVACY_POLICY_URL).catch((err) =>
+            console.error("Failed to open privacy policy", err)
         );
     };
 
@@ -26,6 +34,11 @@ export default function Support () {
                 <TouchableOpacity onPress={openEmail}>
                     <ThemedText style={styles.emailLink}>
                         savidgeapps@gmail.com
+                    </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={openPrivacyPolicy}>
+                    <ThemedText style={styles.emailLink}>
+                        Privacy Policy
                     </ThemedText>
                 </TouchableOpacity>
             </ThemedView>
