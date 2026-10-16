@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "@/app/(screens)/Routes";
@@ -7,7 +7,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { GeneralButton } from "@/components/GeneralButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Colors } from "@/constants/Colors";
-import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 
 function Logo() {
@@ -26,15 +25,6 @@ function Logo() {
 export default function HomeScreen() {
   const { routeTo } = useRouteTo();
   const muted = useThemeColor({}, 'muted');
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await requestTrackingPermissionsAsync();
-      if (status === 'granted') {
-        console.log('Granted permissions');
-      }
-    })();
-  }, []);
 
   const homeButtons = [
     { title: "Play Computer", route: Routes.PlayComputer, variant: 'primary' as const },
