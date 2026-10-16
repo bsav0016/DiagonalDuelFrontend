@@ -22,6 +22,7 @@ export const URL_EXT = {
     LOGIN: 'login/',
     REGISTER: 'register/',
     LOGOUT: 'logout/',
+    ACCOUNT: 'account/',
     GAMES: 'games/',
     MATCHMAKING: 'matchmaking/',
     MOVES: 'moves/',

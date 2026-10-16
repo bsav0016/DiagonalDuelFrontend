@@ -16,6 +16,7 @@ interface AuthContextType {
     setUserTokenWarned: (warned: Boolean[]) => void;
     auth: (fields: AuthFields, type: AuthType) => Promise<boolean>;
     logout: () => void;
+    deleteAccount: (password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,6 +94,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // Resolves false when the password was wrong; on success the user is signed out locally.
+    const deleteAccount = async (password: string): Promise<boolean> => {
+        if (!tokenRef.current) return false;
+        const deleted = await AuthService.deleteAccount(tokenRef.current, password);
+        if (deleted) {
+            setUser(null);
+            setToken(null);
+            setRefreshToken(null);
+            await AsyncStorage.removeItem('token');
+            await AsyncStorage.removeItem('refreshToken');
+            router.push('/(screens)/login-screen');
+        }
+        return deleted;
+    };
+
     return (
         <AuthContext.Provider value={{ 
             tokenRef, 
@@ -101,8 +117,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setToken, 
             setRefreshToken,
             setUserTokenWarned,
-            auth, 
-            logout 
+            auth,
+            logout,
+            deleteAccount
         }}>
             {children}
         </AuthContext.Provider>
