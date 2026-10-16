@@ -20,7 +20,7 @@ Most board games need two people in the same room at the same time. Diagonal Due
 - **2 Player Game** – pass-and-play on one device.
 - **Play Online** – matchmaking against another registered player. Games are asynchronous: each move has a time limit (default one day), and the home list shows games where it is your turn, their turn, and completed. Online games change both players' Elo rating.
 - **Leaderboard** – top players by online rating and by computer points.
-- **Accounts and support screen.**
+- **How to Play, accounts and a support screen.**
 
 ## Stack
 
