@@ -29,6 +29,7 @@ export default function HomeScreen() {
   const homeButtons = [
     { title: "Play Computer", route: Routes.PlayComputer, variant: 'primary' as const },
     { title: "Play Online", route: Routes.PlayOnline, variant: 'primary' as const },
+    { title: "How to Play", route: Routes.HowToPlay, variant: 'secondary' as const },
     { title: "Leaderboard", route: Routes.Leaderboard, variant: 'secondary' as const },
     { title: "Support", route: Routes.Support, variant: 'secondary' as const }
   ]
