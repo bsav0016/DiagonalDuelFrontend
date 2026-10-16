@@ -101,11 +101,12 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         alignItems: "center",
         transform: [{ rotate: "-135deg" }],
-        maxWidth: '68%',
+        width: width * 0.68,
         aspectRatio: 1,
     },
 
     row: {
+        width: '100%',
         flexDirection: "row",
         backgroundColor: 'none'
     },

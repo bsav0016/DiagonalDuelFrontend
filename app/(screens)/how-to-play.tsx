@@ -51,7 +51,9 @@ export default function HowToPlay() {
                         </ThemedView>
                     </ThemedView>
                 ))}
-                <GeneralButton title="Got it" onPress={routeBack} autoWidth={false} />
+                <View style={styles.gotItWrapper}>
+                    <GeneralButton title="Got it" onPress={routeBack} autoWidth={false} />
+                </View>
             </ScrollView>
         </CustomHeaderView>
     );
@@ -62,6 +64,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingBottom: 24,
         gap: 12,
+    },
+
+    gotItWrapper: {
+        paddingHorizontal: 3,
     },
 
     pieces: {
