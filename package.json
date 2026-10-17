@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "eas-build-pre-install": "bash scripts/eas-install-metal.sh"
   },
   "jest": {
     "preset": "jest-expo",
