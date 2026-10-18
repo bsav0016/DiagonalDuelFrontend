@@ -37,9 +37,12 @@ export const Colors = {
     background: '#1b2487',
     player1: '#ef4444',
     player2: '#facc15',
-    valid: '#9127b8',
+    valid: '#c7d2fe',
     empty: '#3b82f6',
-    borderColor: '#2b36b8'
+    borderColor: '#2b36b8',
+    emptyEdge: '#2f5fd0',
+    player1Edge: '#b91c1c',
+    player2Edge: '#ca8a04'
   },
   onlinePlay: {
     general: '#9127b8',
