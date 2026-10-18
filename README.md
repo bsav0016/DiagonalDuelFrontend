@@ -18,7 +18,7 @@ Most board games need two people in the same room at the same time. Diagonal Due
 
 - **Play Computer** – choose a level from 0 to 100. Beating the computer earns leaderboard points equal to the level.
 - **2 Player Game** – pass-and-play on one device.
-- **Play Online** – matchmaking against another registered player. Games are asynchronous: each move has a time limit (default one day), and the home list shows games where it is your turn, their turn, and completed. Online games change both players' Elo rating.
+- **Play Online** – matchmaking against another registered player. Games are asynchronous: each move has a time limit (default one day), and the home list shows games where it is your turn, their turn, and completed. Online games change both players' Elo rating, and push notifications tell you when it is your turn, a match is found, a game ends, or your time is running out.
 - **Leaderboard** – top players by online rating and by computer points.
 - **How to Play, accounts (including in-app account deletion) and a support screen.**
 
@@ -61,16 +61,18 @@ npm run lint         # ESLint (expo config); errors fail CI, warnings do not
 
 GitHub Actions (`.github/workflows/ci.yml`) runs the type check, lint, the tests and an Android JavaScript bundle export (`npx expo export --platform android`) on every pull request and on pushes to `master`. It does not build or release the app; EAS builds are separate.
 
-The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) and backend URL selection.
+The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) and backend URL selection, and push registration (permission asked once per install, token sent to and removed from the backend, failures never blocking sign-in or sign-out).
 
 ## Design decisions
 
 - **The game logic lives in the client for offline modes and on the server for online play.** The server re-checks every online move, so the client is not trusted.
 - **Asynchronous online games** with per-move time limits, so players don't need to be online at the same time.
+- **Push notifications are optional and never in the way.** The app asks for notification permission once, at the first sign-in on a device, and registers its Expo push token with the backend. Registration errors are logged and ignored, and the 15-second polling and the check on opening the app still work without push. Tapping a notification opens that game.
 - **Adjustable AI strength** by mixing search, heuristic and random moves instead of just limiting search depth.
 
 ## Limitations
 
+- Push notifications need a physical device and an EAS build that includes `expo-notifications`. Android additionally needs Firebase credentials (`google-services.json` and an FCM key uploaded to EAS); without them Android simply does not register and the app behaves as before. iOS simulators cannot receive remote push.
 - The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
 - A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
