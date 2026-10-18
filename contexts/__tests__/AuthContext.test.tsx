@@ -11,6 +11,11 @@ import { User } from '@/features/auth/User';
 jest.mock('@react-native-async-storage/async-storage', () =>
     require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+// The push module configures expo-notifications when it is imported, which does not work under Jest.
+jest.mock('@/features/notifications/pushRegistration', () => ({
+    registerForPush: jest.fn(),
+    unregisterFromPush: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('@/features/auth/AuthService', () => ({
     AuthService: { auth: jest.fn(), logout: jest.fn(), deleteAccount: jest.fn() },
 }));
@@ -115,10 +120,9 @@ describe('AuthProvider', () => {
         expect(router.push).toHaveBeenCalledWith('/(screens)/login-screen');
     });
 
-    // Known bug: logout() clears the saved token before it calls the server, so the server is sent `Bearer null` and the
-    // refresh token is never invalidated. The push notification PR (#32) fixes it. This is marked as failing so the
-    // suite passes today and complains once the fix lands, as a reminder to turn it into a normal test.
-    it.failing('tells the server which token is signing out', async () => {
+    // Regression test: logout() used to clear the saved token before it called the server, so the server was sent
+    // `Bearer null` and the refresh token was never invalidated. It now reads the token first.
+    it('tells the server which token is signing out', async () => {
         service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
         service.logout.mockResolvedValue(true);
         const api = await mount();
