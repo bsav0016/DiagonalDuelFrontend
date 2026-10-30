@@ -13,13 +13,14 @@ import { GeneralButton } from "@/components/GeneralButton";
 import { Colors } from "@/constants/Colors";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+type TextInputRef = React.ComponentRef<typeof TextInput>;
 
 
 interface Field<T> {
     field: keyof T;
     text: string;
     value: string | undefined;
-    ref: RefObject<TextInput>;
+    ref: RefObject<TextInputRef | null>;
 }
 
 export default function LoginScreen() {
@@ -36,12 +37,12 @@ export default function LoginScreen() {
     const [type, setType] = useState<AuthType>(AuthType.Login);
     const [processing, setProcessing] = useState<Boolean>(false);
 
-    const usernameRef = React.createRef<TextInput>();
-    const passwordRef = React.createRef<TextInput>();
-    const confirmPasswordRef = React.createRef<TextInput>();
-    const emailRef = React.createRef<TextInput>();
+    const usernameRef = React.createRef<TextInputRef>();
+    const passwordRef = React.createRef<TextInputRef>();
+    const confirmPasswordRef = React.createRef<TextInputRef>();
+    const emailRef = React.createRef<TextInputRef>();
 
-    const focusNextField = (nextField: React.RefObject<TextInput>) => {
+    const focusNextField = (nextField: React.RefObject<TextInputRef | null>) => {
         nextField.current?.focus();
     };
 
