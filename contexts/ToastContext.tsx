@@ -27,7 +27,7 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastRef = useRef<(message: string, actions: ToastAction[]) => void>();
+  const toastRef = useRef<(message: string, actions: ToastAction[]) => void>(undefined);
 
   const addToast = useCallback(
     (

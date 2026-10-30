@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect } from "expo-router";
 import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from "react-native";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
