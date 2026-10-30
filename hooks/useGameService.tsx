@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { GameService } from "../features/game/GameService";
 import { useToast } from "@/contexts/ToastContext";
 import { formatTime } from "@/lib/TimeFormatUtil";
+import { registerForPush } from "@/features/notifications/pushRegistration";
 
 export function useGameService() {
     const { tokenRef, refreshTokenRef, userTokenWarnedRef, setToken, setUserTokenWarned, logout } = useAuth();
@@ -83,7 +84,14 @@ export function useGameService() {
         return await GameService.updateComputerScore(token, computerLevel);
     }
 
+    // Refreshes this device's push token for an already signed-in user. Does not show the permission prompt.
+    const refreshPushRegistration = async () => {
+        const token = await getToken();
+        await registerForPush(token, false);
+    };
+
     return {
+        refreshPushRegistration,
         getAllGames,
         makeMove,
         getMatchmaking,
