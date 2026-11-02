@@ -59,9 +59,9 @@ npm run typecheck    # tsc --noEmit
 npm run lint         # ESLint (expo config); errors fail CI, warnings do not
 ```
 
-GitHub Actions (`.github/workflows/ci.yml`) runs the type check, lint, the tests and an Android JavaScript bundle export (`npx expo export --platform android`) on every pull request and on pushes to `master`. It does not build or release the app; EAS builds are separate.
+GitHub Actions (`.github/workflows/ci.yml`) runs the type check, lint, the tests, `expo-doctor` (package versions against the Expo SDK) and JavaScript bundle exports for Android and iOS (`npx expo export --platform <android|ios>`) on every pull request and on pushes to `master`. It does not build or release the app; EAS builds are separate.
 
-The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) and backend URL selection.
+The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highlighting, resetting a game), the `Game` model (turn order, board rebuilding, parsing the server's payload), the computer opponent (it always plays a legal move, takes an immediate win and blocks an immediate loss) backend URL selection, the network helper (statuses and error messages), sign-in, registration and sign-out (the service and the auth context), and the game board component (cells, taps, valid-move dots, winning line).
 
 ## Design decisions
 
@@ -71,7 +71,7 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 
 ## Limitations
 
-- The rules, `Game` model and computer opponent are unit tested, but the screens and network services are not.
+- The rules, `Game` model, computer opponent, auth and the board are tested, but the screens, the game and leaderboard network services and the polling context are not. One known sign-out bug is recorded as an expected-failing test (see `contexts/__tests__/AuthContext.test.tsx`).
 - A full board with no four in a row is a draw (`isDraw` on the client, `Draw` stored by the server). Draws do not award computer-opponent points.
 - The same win/valid-move rules are implemented twice (client in TypeScript, server in Python), so they must be kept in sync by hand.
 

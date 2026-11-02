@@ -37,10 +37,20 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # Game rules, win detection, the Game model, the computer opponent and URL selection.
+      # Game rules, win detection, the Game model, the computer opponent, URL selection, the network helper, sign-in and
+      # sign-out, and the board component.
       - name: Tests
         run: npx jest --ci
 
+      # Checks the project against its Expo SDK: package versions, config and known problems. Fails on a patch
+      # mismatch, so run `npx expo install --fix` after changing a dependency.
+      - name: Expo doctor
+        run: npx expo-doctor
+
       # Bundles the JavaScript for Android. Catches broken imports and routes without native tooling.
-      - name: Build check
-        run: npx expo export --platform android --output-dir "$RUNNER_TEMP/export"
+      - name: Build check (Android)
+        run: npx expo export --platform android --output-dir "$RUNNER_TEMP/export-android"
+
+      # The same for iOS, which uses different native module entry points and can break on its own.
+      - name: Build check (iOS)
+        run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/export-ios"
