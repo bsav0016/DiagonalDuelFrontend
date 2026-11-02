@@ -12,7 +12,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 
 export default function Profile() {
     const { logout, deleteAccount } = useAuth();
-    const { userRef } = useUser();
+    const { user } = useUser();
     const { addToast } = useToast();
     const text = useThemeColor({}, 'text');
     const border = useThemeColor({}, 'border');
@@ -49,19 +49,19 @@ export default function Profile() {
     const [losses, setLosses] = useState<number>(0);
     
     useEffect(() => {
-            if (userRef.current instanceof User) {
-                const result = userRef.current.getWinsAndLosses();
+            if (user instanceof User) {
+                const result = user.getWinsAndLosses();
                 setWins(result.wins);
                 setLosses(result.losses);
             }
-    }, [userRef.current])
+    }, [user])
 
     const profileFields = [
-        { title: "Username", value: userRef.current?.username },
-        { title: "Email", value: userRef.current?.email },
-        { title: "Online Rating", value: userRef.current?.onlineRating },
+        { title: "Username", value: user?.username },
+        { title: "Email", value: user?.email },
+        { title: "Online Rating", value: user?.onlineRating },
         { title: "Online W-L", value: `${wins}-${losses}`},
-        { title: "Computer Points", value: userRef.current?.computerPoints },
+        { title: "Computer Points", value: user?.computerPoints },
     ]
 
     return (

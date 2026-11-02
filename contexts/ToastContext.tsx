@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, useRef, ReactNode } from "react";
+import React, { createContext, useState, useCallback, ReactNode } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
@@ -27,8 +27,6 @@ interface ToastProviderProps {
 
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastRef = useRef<(message: string, actions: ToastAction[]) => void>(undefined);
-
   const addToast = useCallback(
     (
       message: string, 
@@ -43,8 +41,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   const removeToast = useCallback((id: number) => {
     setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
   }, []);
-
-  toastRef.current = addToast;
 
   return (
     <ToastContext.Provider value={{ addToast }}>

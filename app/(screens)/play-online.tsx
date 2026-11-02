@@ -19,7 +19,7 @@ import { useThemeColor } from "@/hooks/useThemeColor";
 export default function PlayOnline () {
     const { routeTo, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { userRef } = useUser();
+    const { user } = useUser();
     const { pollUserGames, createMatchmaking, cancelMatchmaking } = useGamePoll();
     const [yourTurnGames, setYourTurnGames] = useState<Game[]>([]);
     const [theirTurnGames, setTheirTurnGames] = useState<Game[]>([]);
@@ -29,7 +29,7 @@ export default function PlayOnline () {
 
     useFocusEffect(
         React.useCallback(() => {
-            if (!userRef.current) {
+            if (!user) {
                 routeReplace(Routes.Login);
                 return;
             }
@@ -38,12 +38,12 @@ export default function PlayOnline () {
             const theirTurn: Game[] = [];
             const completed: Game[] = [];
     
-            for (const game of userRef.current.games) {
+            for (const game of user.games) {
                 if (game.winner) {
                     completed.push(game);
                 } else if (
-                    game.player1.username === userRef.current.username && game.moves.length % 2 === 0 ||
-                    game.player2.username === userRef.current.username && game.moves.length % 2 === 1
+                    game.player1.username === user.username && game.moves.length % 2 === 0 ||
+                    game.player2.username === user.username && game.moves.length % 2 === 1
                 ) {
                     yourTurn.push(game);
                 } else {
@@ -54,7 +54,7 @@ export default function PlayOnline () {
             setYourTurnGames(yourTurn);
             setTheirTurnGames(theirTurn);
             setCompletedGames(completed);
-        }, [userRef.current])
+        }, [user])
     );
 
     interface IndividualGameProps {
@@ -63,12 +63,12 @@ export default function PlayOnline () {
 
     const IndividualGame = ({game}: IndividualGameProps) => {
         const opponentUsername: string =
-            game.player1.username === userRef.current?.username
+            game.player1.username === user?.username
             ? game.player2.username
             : game.player1.username;
 
         const opponentRating: number =
-            game.player1.username === userRef.current?.username
+            game.player1.username === user?.username
             ? game.player2.rating
             : game.player1.rating
 
@@ -81,7 +81,7 @@ export default function PlayOnline () {
             <ThemedView style={[
                 styles.gameView,
                 game.winner ?
-                    (userRef.current?.username && game.winner.split(' ')[0] == (userRef.current.username)
+                    (user?.username && game.winner.split(' ')[0] == (user.username)
                     ? { backgroundColor: Colors.onlinePlay.win }
                     : { backgroundColor: Colors.onlinePlay.loss })
                 : { backgroundColor: Colors.onlinePlay.general },
@@ -145,8 +145,8 @@ export default function PlayOnline () {
                     <ThemedView>
                         <ThemedText type='subtitle' style={styles.gamesHeaderText}>Matchmaking</ThemedText>
                         <GeneralButton title='New Online Game' onPress={createNewGame} />
-                        { userRef.current?.matchmaking && userRef.current?.matchmaking.length > 0 ?
-                            ( userRef.current?.matchmaking.map((days) => (
+                        { user?.matchmaking && user.matchmaking.length > 0 ?
+                            ( user?.matchmaking.map((days) => (
                                 <ThemedView style={styles.matchmakingView} key={days}>
                                     <ThemedText style={styles.matchmakingText}>
                                         {`Waiting for ${days}-day turn game...`}
