@@ -15,7 +15,7 @@ export default function Leaderboard() {
     const { setLoading } = useLoading();
     const { addToast } = useToast();
     const { routeBack } = useRouteTo();
-    const { userRef } = useUser()
+    const { user } = useUser()
 
     const [computerLeaderboard, setComputerLeaderboard] = useState<ComputerPointsLeader[]>([]);
     const [ratingLeaderboard, setRatingLeaderboard] = useState<OnlineRatingLeader[]>([]);
@@ -46,23 +46,23 @@ export default function Leaderboard() {
     useEffect(() => {
         setUserComputerLeader(null);
         for (const leader of computerLeaderboard) {
-            if (leader.username === userRef.current?.username) {
+            if (leader.username === user?.username) {
                 setUserComputerLeader(leader);
             }
         }
-    }, [computerLeaderboard]);
+    }, [computerLeaderboard, user]);
 
     useEffect(() => {
         setUserRatingLeader(null);
         for (const leader of ratingLeaderboard) {
-            if (leader.username === userRef.current?.username) {
+            if (leader.username === user?.username) {
                 setUserRatingLeader(leader);
             }
         }
-    }, [ratingLeaderboard]);
+    }, [ratingLeaderboard, user]);
 
     const renderLeaderboardItem = (item: ComputerPointsLeader | OnlineRatingLeader) => (
-        <ThemedView style={[styles.leaderboardItem, item.username === userRef.current?.username && { backgroundColor: 'orange' }]}>
+        <ThemedView style={[styles.leaderboardItem, item.username === user?.username && { backgroundColor: 'orange' }]}>
             <ThemedText style={styles.rank}>{item.rank}</ThemedText>
             <ThemedText style={styles.username}>{item.username}</ThemedText>
             <ThemedText style={styles.value}>    

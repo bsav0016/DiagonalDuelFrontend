@@ -47,7 +47,7 @@ export default function GameScreen () {
 function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const { routeTo, routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { userRef, updateUserComputerScore } = useUser();
+    const { user, userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
     const { makeMove, updateComputerScore } = useGameService();
     const { pollUserGames } = useGamePoll();
@@ -81,10 +81,10 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
 
 
     useEffect(() => {
-        if (gameInstance.gameType === GameType.Online && !userRef.current) {
+        if (gameInstance.gameType === GameType.Online && !user) {
             routeReplace(Routes.Login);
         }
-    }, [userRef.current]);
+    }, [user]);
 
     useEffect(() => {
         if (!gameInstance.winner) {
@@ -305,8 +305,8 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                         !selectedMove && 
                         !(
                             gameInstance.gameType === GameType.Online && 
-                            userRef.current && 
-                            gameInstance.turnUsername() !== userRef.current.username
+                            user && 
+                            gameInstance.turnUsername() !== user.username
                         )
                     ) ? (
                         gameArray.some(row => row.includes(3)) ?
@@ -330,8 +330,8 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                         !!gameInstance.winner || 
                         (
                             gameInstance.gameType === GameType.Online && 
-                            !!userRef.current && 
-                            gameInstance.turnUsername() !== userRef.current.username
+                            !!user && 
+                            gameInstance.turnUsername() !== user.username
                         )) 
                     }
                     onCellClick={handleCellClick} 

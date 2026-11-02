@@ -1,4 +1,4 @@
-import React, { RefObject, useState } from "react";
+import React, { useRef, useState } from "react";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedView } from "@/components/ThemedView";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,6 @@ interface Field<T> {
     field: keyof T;
     text: string;
     value: string | undefined;
-    ref: RefObject<TextInputRef | null>;
 }
 
 export default function LoginScreen() {
@@ -37,13 +36,11 @@ export default function LoginScreen() {
     const [type, setType] = useState<AuthType>(AuthType.Login);
     const [processing, setProcessing] = useState<Boolean>(false);
 
-    const usernameRef = React.createRef<TextInputRef>();
-    const passwordRef = React.createRef<TextInputRef>();
-    const confirmPasswordRef = React.createRef<TextInputRef>();
-    const emailRef = React.createRef<TextInputRef>();
+    // The text inputs by field name, filled in by each input's callback ref.
+    const inputs = useRef<Partial<Record<keyof AuthFields, TextInputRef | null>>>({});
 
-    const focusNextField = (nextField: React.RefObject<TextInputRef | null>) => {
-        nextField.current?.focus();
+    const focusNextField = (field: keyof AuthFields) => {
+        inputs.current[field]?.focus();
     };
 
     const updateFormField = (fieldName: keyof AuthFields, value: string) => {
@@ -54,14 +51,14 @@ export default function LoginScreen() {
     };
 
     const loginFields: Field<AuthFields>[] = [
-        { field: "username", text: "Username", value: formFields.username, ref: usernameRef },
-        { field: "password", text: "Password", value: formFields.password, ref: passwordRef },
+        { field: "username", text: "Username", value: formFields.username },
+        { field: "password", text: "Password", value: formFields.password },
     ];
 
     const registerFields: Field<AuthFields>[] = [
         ...loginFields,
-        { field: "confirmPassword", text: "Confirm Password", value: formFields.confirmPassword, ref: confirmPasswordRef },
-        { field: "email", text: "Email", value: formFields.email, ref: emailRef },
+        { field: "confirmPassword", text: "Confirm Password", value: formFields.confirmPassword },
+        { field: "email", text: "Email", value: formFields.email },
     ];
 
     const authUser = async () => {
@@ -126,7 +123,7 @@ export default function LoginScreen() {
                                             <ThemedText>{`${field.text}: `}</ThemedText>
                                         </ThemedView>
                                         <TextInput
-                                            ref={field.ref}
+                                            ref={(node) => { inputs.current[field.field] = node; }}
                                             value={field.value}
                                             onChangeText={(value) => updateFormField(field.field, value)}
                                             secureTextEntry={field.field.toLowerCase().includes("password")}
@@ -141,8 +138,7 @@ export default function LoginScreen() {
                                                 if (isLastField) {
                                                     Keyboard.dismiss();
                                                 } else {
-                                                    const nextField = displayedFields[index + 1].ref;
-                                                    focusNextField(nextField);
+                                                    focusNextField(displayedFields[index + 1].field);
                                                 }
                                             }}
                                         />
