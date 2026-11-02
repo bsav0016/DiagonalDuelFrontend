@@ -20,29 +20,31 @@ const GamePollContext = createContext<GamePollContextType>({
 });
 
 export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { userRef, updateUserGames, updateMatchmaking } = useUser();
+  const { user, userRef, updateUserGames, updateMatchmaking } = useUser();
+  // Polling runs while someone is signed in; a new user object alone (after each poll) must not restart it.
+  const signedIn = user !== null;
   const { logout } = useAuth();
   const { setLoading } = useLoading();
   const { addToast } = useToast();
   const { getAllGames, getMatchmaking, startMatchmaking, stopMatchmaking } = useGameService();
 
   useEffect(() => {
-    if (!userRef.current) return;
+    if (!signedIn) return;
     const pollingGames = setInterval(() => {
       pollUserGames();
     }, 15000);
 
     return () => clearInterval(pollingGames);
-  }, [userRef.current]);
+  }, [signedIn]);
 
   useEffect(() => {
-    if (!userRef.current) return;
+    if (!signedIn) return;
     const pollingMatchmaking = setInterval(() => {
       pollMatchmaking();
     }, 15000);
 
     return () => clearInterval(pollingMatchmaking);
-  }, [userRef.current]);
+  }, [signedIn]);
 
   const pollUserGames = async () => {
     if (!userRef.current) return;
