@@ -113,7 +113,7 @@ export function resetGameInstance(game: Game) {
         }
         const computerPlayer: Player = new Player("Computer", 0, levelNumber);
         const userPlayer: Player = new Player("Player");
-        const computerFirst: Boolean = Math.random() < 0.5;
+        const computerFirst: boolean = Math.random() < 0.5;
         player1 = computerFirst ? computerPlayer : userPlayer;
         player2 = computerFirst ? userPlayer : computerPlayer;
     } else {

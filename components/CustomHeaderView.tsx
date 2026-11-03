@@ -12,10 +12,10 @@ import { Routes } from "@/app/(screens)/Routes";
 interface CustomHeaderProps {
     header: string;
     children: ReactNode;
-    canGoBack?: Boolean;
+    canGoBack?: boolean;
     goBack?: () => void,
     style?: StyleProp<ViewStyle>;
-    goProfile?: Boolean;
+    goProfile?: boolean;
 }
 
 export function CustomHeaderView({ 

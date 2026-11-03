@@ -7,7 +7,6 @@ import { ThemedText } from "@/components/ThemedText";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { useUser } from "@/contexts/UserContext";
 import { ToastAction, useToast } from "@/contexts/ToastContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useGamePoll } from "@/contexts/GamePollContext";
 import { Routes } from "./Routes";
 import { Game } from "@/features/game/models/Game";
@@ -81,7 +80,7 @@ export default function PlayOnline () {
             <ThemedView style={[
                 styles.gameView,
                 game.winner ?
-                    (user?.username && game.winner.split(' ')[0] == (user.username)
+                    (user?.username && game.winner.split(' ')[0] === (user.username)
                     ? { backgroundColor: Colors.onlinePlay.win }
                     : { backgroundColor: Colors.onlinePlay.loss })
                 : { backgroundColor: Colors.onlinePlay.general },

@@ -55,13 +55,13 @@ export default function PlayComputer () {
     const startComputerGame = () => {
         const computerPlayer: Player = new Player("Computer", 0, levelNumber);
         const userPlayer: Player = new Player("Player");
-        const computerFirst: Boolean = Math.random() < 0.5;
+        const computerFirst: boolean = Math.random() < 0.5;
         const player1: Player = computerFirst ? computerPlayer : userPlayer;
         const player2: Player = computerFirst ? userPlayer : computerPlayer;
         startGame(player1, player2, true);
     }
 
-    const startGame = (player1: Player, player2: Player, computerGame: Boolean) => {
+    const startGame = (player1: Player, player2: Player, computerGame: boolean) => {
         const gameType: GameType = computerGame ? GameType.Computer : GameType.TwoPlayer;
         const game: Game = new Game(gameType, null, player1, player2);
         const serializedGame = encodeURIComponent(JSON.stringify(game));
