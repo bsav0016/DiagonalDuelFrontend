@@ -116,7 +116,7 @@ export class GameAI {
     
         for (const move of availableMoves) {
             const newBoard = this.applyMove(gameBoard, move, computerTurn ? this.computerNumber : this.opponentNumber);    
-            const [_, score] = await this.alphabeta(newBoard, depth - 1, alpha, beta, !computerTurn);
+            const [, score] = await this.alphabeta(newBoard, depth - 1, alpha, beta, !computerTurn);
     
             if (computerTurn) {
                 if (score > bestScore) {

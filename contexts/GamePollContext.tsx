@@ -61,7 +61,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const pollMatchmaking = async () => {
-    if (!userRef.current || userRef.current.matchmaking.length == 0) return;
+    if (!userRef.current || userRef.current.matchmaking.length === 0) return;
     try {
       const updatedMatchmaking = await getMatchmaking();
       if (!arraysAreEqual(userRef.current.matchmaking, updatedMatchmaking)) {

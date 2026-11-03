@@ -34,7 +34,7 @@ export default function LoginScreen() {
         confirmPassword: undefined,
     });
     const [type, setType] = useState<AuthType>(AuthType.Login);
-    const [processing, setProcessing] = useState<Boolean>(false);
+    const [processing, setProcessing] = useState<boolean>(false);
 
     // The text inputs by field name, filled in by each input's callback ref.
     const inputs = useRef<Partial<Record<keyof AuthFields, TextInputRef | null>>>({});

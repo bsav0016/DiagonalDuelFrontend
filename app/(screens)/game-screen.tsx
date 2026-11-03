@@ -45,7 +45,7 @@ export default function GameScreen () {
 }
 
 function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
-    const { routeTo, routeBack, routeReplace } = useRouteTo();
+    const { routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
     const { user, userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
@@ -65,7 +65,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const [lastMove, setLastMove] = useState<Move | null>(
         gameInstance.moves.length > 0 ? gameInstance.moves[gameInstance.moves.length - 1] : null
     );
-    const [displayConfirm, setDisplayConfirm] = useState<Boolean>(false);
+    const [displayConfirm, setDisplayConfirm] = useState<boolean>(false);
     const [winnerDetails, setWinnerDetails] = useState<WinnerInterface | null>(checkWinner(gameArray));
     const [isComputerProcessing, setIsComputerProcessing] = useState(false);
     const [gameAI, setGameAI] = useState<GameAI | null>(null);
@@ -259,7 +259,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
         setSelectedMove(null);
     }
 
-    const updateAvailableMoves = (show: Boolean) => {
+    const updateAvailableMoves = (show: boolean) => {
         const newGameArray: number[][] = show ? getAllValidMoves(gameArray) : hideValidMoves(gameArray);
         setGameArray(newGameArray);
     }
