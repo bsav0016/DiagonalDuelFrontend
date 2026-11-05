@@ -150,7 +150,13 @@ export default function LoginScreen() {
                             :
                             <GeneralButton title={header} onPress={authUser} />
                             }
-                            
+                            {type === AuthType.Login && (
+                                <TouchableOpacity onPress={() => routeTo(Routes.ForgotPassword)}>
+                                    <ThemedText style={[styles.switchButton, { color: Colors.button.background }]}>
+                                        Forgot password?
+                                    </ThemedText>
+                                </TouchableOpacity>
+                            )}
                         </ThemedView>
                         <ThemedView style={styles.switchView}>
                             <ThemedText>{bottomText}</ThemedText>
