@@ -81,5 +81,24 @@ export const AuthService = {
             }
             throw error;
         }
+    },
+
+    // Emails a reset code. The server answers the same whether or not the address has an account.
+    async requestPasswordReset(email: string): Promise<void> {
+        await networkRequest(
+            URL_EXT.PASSWORD_RESET_REQUEST,
+            RequestMethod.POST,
+            { ...HEADERS().JSON },
+            JSON.stringify({ email: email.trim() })
+        );
+    },
+
+    async confirmPasswordReset(email: string, code: string, newPassword: string): Promise<void> {
+        await networkRequest(
+            URL_EXT.PASSWORD_RESET_CONFIRM,
+            RequestMethod.POST,
+            { ...HEADERS().JSON },
+            JSON.stringify({ email: email.trim(), code: code.trim(), new_password: newPassword })
+        );
     }
 }
