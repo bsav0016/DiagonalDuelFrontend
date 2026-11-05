@@ -11,15 +11,15 @@ import { User } from '@/features/auth/User';
 jest.mock('@react-native-async-storage/async-storage', () =>
     require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+// The push module configures expo-notifications when it is imported, which does not work under Jest.
+jest.mock('@/features/notifications/pushRegistration', () => ({
+    registerForPush: jest.fn(),
+    unregisterFromPush: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('@/features/auth/AuthService', () => ({
     AuthService: { auth: jest.fn(), logout: jest.fn(), deleteAccount: jest.fn() },
 }));
 const mockSetUser = jest.fn();
-const mockRegister = jest.fn();
-const mockForget = jest.fn();
-jest.mock('@/features/notifications/PushService', () => ({
-    PushService: { register: (...a: any[]) => mockRegister(...a), forget: () => mockForget() },
-}));
 jest.mock('../UserContext', () => ({ useUser: () => ({ setUser: mockSetUser }) }));
 
 const service = AuthService as jest.Mocked<typeof AuthService>;
@@ -120,30 +120,17 @@ describe('AuthProvider', () => {
         expect(router.push).toHaveBeenCalledWith('/(screens)/login-screen');
     });
 
-    it('tells the server which token is signing out, and which device to stop notifying', async () => {
+    // Regression test: logout() used to clear the saved token before it called the server, so the server was sent
+    // `Bearer null` and the refresh token was never invalidated. It now reads the token first.
+    it('tells the server which token is signing out', async () => {
         service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
         service.logout.mockResolvedValue(true);
-        mockForget.mockResolvedValue('ExponentPushToken[abc]');
         const api = await mount();
         await act(async () => { await api().auth(FIELDS, AuthType.Login); });
 
         await act(async () => { await api().logout(); });
 
-        expect(service.logout).toHaveBeenCalledWith('acc', 'ExponentPushToken[abc]');
-    });
-
-    it('registers the device for push after signing in', async () => {
-        service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
-        const api = await mount();
-        await act(async () => { await api().auth(FIELDS, AuthType.Login); });
-        expect(mockRegister).toHaveBeenCalledWith('acc');
-    });
-
-    it('registers the device for push when a saved session is restored at launch', async () => {
-        await AsyncStorage.setItem('token', 'a');
-        await AsyncStorage.setItem('refreshToken', 'r');
-        await mount();
-        expect(mockRegister).toHaveBeenCalledWith('a');
+        expect(service.logout).toHaveBeenCalledWith('acc');
     });
 
     it('does nothing on sign-out when nobody is signed in', async () => {

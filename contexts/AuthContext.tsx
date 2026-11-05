@@ -6,7 +6,7 @@ import { AuthFields } from '@/features/auth/AuthFields';
 import { AuthType } from '@/features/auth/AuthType';
 import { useUser } from './UserContext';
 import { router } from 'expo-router';
-import { PushService } from '@/features/notifications/PushService';
+import { registerForPush, unregisterFromPush } from '@/features/notifications/pushRegistration';
 
 interface AuthContextType {
     tokenRef: React.MutableRefObject<string | null>;
@@ -46,7 +46,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (storedToken && storedRefreshToken) {
                 setToken(storedToken);
                 setRefreshToken(storedRefreshToken);
-                PushService.register(storedToken);
             }
         };
 
@@ -62,7 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await AsyncStorage.setItem('token', access);
             await AsyncStorage.setItem('refreshToken', refresh);
             setUserTokenWarned([false, false, false]);
-            PushService.register(access);
+            // Ask for notification permission the first time someone signs in on this device. Not awaited:
+            // push is optional and must not delay or fail the login.
+            registerForPush(access, true);
             return true;
         } catch (error) {
             if (error instanceof NetworkError && error.status === 403) {
@@ -83,15 +84,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const logout = async () => {
         try {
-            if (!tokenRef.current) return;
-            const authToken = tokenRef.current;
-            const pushToken = await PushService.forget();
+            // Keep the access token: it is cleared below, but the server calls still need it.
+            const accessToken = tokenRef.current;
+            if (!accessToken) return;
             setUser(null);
             setToken(null);
             setRefreshToken(null);
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refreshToken');
-            await AuthService.logout(authToken, pushToken);
+            await unregisterFromPush(accessToken);
+            await AuthService.logout(accessToken);
         } catch (error) {
             throw error;
         } finally {
@@ -104,7 +106,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!tokenRef.current) return false;
         const deleted = await AuthService.deleteAccount(tokenRef.current, password);
         if (deleted) {
-            await PushService.forget();
             setUser(null);
             setToken(null);
             setRefreshToken(null);
