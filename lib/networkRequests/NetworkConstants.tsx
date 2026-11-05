@@ -23,6 +23,7 @@ export const URL_EXT = {
     REGISTER: 'register/',
     LOGOUT: 'logout/',
     ACCOUNT: 'account/',
+    DEVICES: 'devices/',
     PASSWORD_RESET_REQUEST: 'password-reset/request/',
     PASSWORD_RESET_CONFIRM: 'password-reset/confirm/',
     GAMES: 'games/',

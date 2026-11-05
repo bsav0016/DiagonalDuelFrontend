@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { GamePollProvider } from '@/contexts/GamePollContext';
 import { Routes } from '@/app/(screens)/Routes';
 import { ThemedView } from '@/components/ThemedView';
+import { NotificationRouter } from '@/components/NotificationRouter';
 
 export default function PagesLayout() {
   return (
@@ -18,6 +19,7 @@ export default function PagesLayout() {
           <AuthProvider>
             <RouteProvider>
               <GamePollProvider>
+                <NotificationRouter />
                 <ThemedView style={styles.fullScreenArea}>
                   <SafeAreaView style={styles.safeArea}>
                     <Stack screenOptions={{ headerShown: false }}>
