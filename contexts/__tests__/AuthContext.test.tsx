@@ -12,8 +12,9 @@ jest.mock('@react-native-async-storage/async-storage', () =>
     require('@react-native-async-storage/async-storage/jest/async-storage-mock'));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 // The push module configures expo-notifications when it is imported, which does not work under Jest.
+const mockRegisterForPush = jest.fn();
 jest.mock('@/features/notifications/pushRegistration', () => ({
-    registerForPush: jest.fn(),
+    registerForPush: (...args: unknown[]) => mockRegisterForPush(...args),
     unregisterFromPush: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('@/features/auth/AuthService', () => ({
@@ -131,6 +132,13 @@ describe('AuthProvider', () => {
         await act(async () => { await api().logout(); });
 
         expect(service.logout).toHaveBeenCalledWith('acc');
+    });
+
+    it('registers for push after sign-in without showing the permission prompt', async () => {
+        service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
+        const api = await mount();
+        await act(async () => { await api().auth(FIELDS, AuthType.Login); });
+        expect(mockRegisterForPush).toHaveBeenCalledWith('acc', false);
     });
 
     it('does nothing on sign-out when nobody is signed in', async () => {

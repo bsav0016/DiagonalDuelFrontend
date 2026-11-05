@@ -90,8 +90,15 @@ export function useGameService() {
         await registerForPush(token, false);
     };
 
+    // Shows the permission prompt (once per install) and registers this device if it is granted.
+    const enablePushNotifications = async () => {
+        const token = await getToken();
+        await registerForPush(token, true);
+    };
+
     return {
         refreshPushRegistration,
+        enablePushNotifications,
         getAllGames,
         makeMove,
         getMatchmaking,

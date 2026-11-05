@@ -67,7 +67,7 @@ The tests cover the game rules (`validateMove`, `checkWinner`, valid-move highli
 
 - **The game logic lives in the client for offline modes and on the server for online play.** The server re-checks every online move, so the client is not trusted.
 - **Asynchronous online games** with per-move time limits, so players don't need to be online at the same time.
-- **Push notifications are optional and never in the way.** The app asks for notification permission once, at the first sign-in on a device, and registers its Expo push token with the backend. Registration errors are logged and ignored, and the 15-second polling and the check on opening the app still work without push. Tapping a notification opens that game.
+- **Push notifications are optional and never in the way.** The app asks for notification permission once, the first time someone starts an online game, and registers its Expo push token with the backend (on later sign-ins and launches it re-registers quietly if permission was granted). A notification arriving while the app is open refreshes the games straight away. Registration errors are logged and ignored, and the 15-second polling and the check on opening the app still work without push. Tapping a notification opens that game.
 - **Adjustable AI strength** by mixing search, heuristic and random moves instead of just limiting search depth.
 
 ## Limitations
