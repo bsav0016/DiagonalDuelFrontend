@@ -11,12 +11,14 @@ interface GamePollContextType {
   pollUserGames: () => Promise<void>;
   createMatchmaking: (days: number) => Promise<void>;
   cancelMatchmaking: (days: number) => Promise<void>;
+  enablePushNotifications: () => Promise<void>;
 }
 
 const GamePollContext = createContext<GamePollContextType>({
   pollUserGames: async () => {},
   createMatchmaking: async () => {},
-  cancelMatchmaking: async () => {}
+  cancelMatchmaking: async () => {},
+  enablePushNotifications: async () => {}
 });
 
 export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -26,7 +28,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   const { logout } = useAuth();
   const { setLoading } = useLoading();
   const { addToast } = useToast();
-  const { getAllGames, getMatchmaking, startMatchmaking, stopMatchmaking } = useGameService();
+  const { getAllGames, getMatchmaking, startMatchmaking, stopMatchmaking, enablePushNotifications } = useGameService();
 
   useEffect(() => {
     if (!signedIn) return;
@@ -139,7 +141,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   return (
     <GamePollContext.Provider
-      value={{ pollUserGames, createMatchmaking, cancelMatchmaking }}
+      value={{ pollUserGames, createMatchmaking, cancelMatchmaking, enablePushNotifications }}
     >
       {children}
     </GamePollContext.Provider>
