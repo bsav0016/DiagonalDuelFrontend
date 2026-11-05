@@ -83,6 +83,15 @@ describe('AuthService.logout', () => {
         expect(headers.Authorization).toBe('Bearer tok');
     });
 
+    it('sends the push token so the server stops notifying this device', async () => {
+        mockedRequest.mockResolvedValue({ data: {}, status: 200 });
+
+        await AuthService.logout('tok', 'ExponentPushToken[abc]');
+
+        const [, , , body] = mockedRequest.mock.calls[0];
+        expect(JSON.parse(body)).toEqual({ push_token: 'ExponentPushToken[abc]' });
+    });
+
     it('rethrows a failure', async () => {
         jest.spyOn(console, 'error').mockImplementation(() => {});
         mockedRequest.mockRejectedValue(new NetworkError('Unauthorized', 401));

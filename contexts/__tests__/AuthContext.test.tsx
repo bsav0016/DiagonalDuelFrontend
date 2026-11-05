@@ -15,6 +15,11 @@ jest.mock('@/features/auth/AuthService', () => ({
     AuthService: { auth: jest.fn(), logout: jest.fn(), deleteAccount: jest.fn() },
 }));
 const mockSetUser = jest.fn();
+const mockRegister = jest.fn();
+const mockForget = jest.fn();
+jest.mock('@/features/notifications/PushService', () => ({
+    PushService: { register: (...a: any[]) => mockRegister(...a), forget: () => mockForget() },
+}));
 jest.mock('../UserContext', () => ({ useUser: () => ({ setUser: mockSetUser }) }));
 
 const service = AuthService as jest.Mocked<typeof AuthService>;
@@ -115,18 +120,30 @@ describe('AuthProvider', () => {
         expect(router.push).toHaveBeenCalledWith('/(screens)/login-screen');
     });
 
-    // Known bug: logout() clears the saved token before it calls the server, so the server is sent `Bearer null` and the
-    // refresh token is never invalidated. The push notification PR (#32) fixes it. This is marked as failing so the
-    // suite passes today and complains once the fix lands, as a reminder to turn it into a normal test.
-    it.failing('tells the server which token is signing out', async () => {
+    it('tells the server which token is signing out, and which device to stop notifying', async () => {
         service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
         service.logout.mockResolvedValue(true);
+        mockForget.mockResolvedValue('ExponentPushToken[abc]');
         const api = await mount();
         await act(async () => { await api().auth(FIELDS, AuthType.Login); });
 
         await act(async () => { await api().logout(); });
 
-        expect(service.logout).toHaveBeenCalledWith('acc');
+        expect(service.logout).toHaveBeenCalledWith('acc', 'ExponentPushToken[abc]');
+    });
+
+    it('registers the device for push after signing in', async () => {
+        service.auth.mockResolvedValue({ user: new User('ann', 'a@b.c', []), access: 'acc', refresh: 'ref' });
+        const api = await mount();
+        await act(async () => { await api().auth(FIELDS, AuthType.Login); });
+        expect(mockRegister).toHaveBeenCalledWith('acc');
+    });
+
+    it('registers the device for push when a saved session is restored at launch', async () => {
+        await AsyncStorage.setItem('token', 'a');
+        await AsyncStorage.setItem('refreshToken', 'r');
+        await mount();
+        expect(mockRegister).toHaveBeenCalledWith('a');
     });
 
     it('does nothing on sign-out when nobody is signed in', async () => {

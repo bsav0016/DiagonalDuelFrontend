@@ -48,15 +48,16 @@ export const AuthService = {
         }
     },
 
-    async logout(token: string) {
+    async logout(token: string, pushToken?: string | null) {
         try {
-            const headers = {
-                ...HEADERS(token).AUTH
-            }
+            const headers = pushToken
+                ? { ...HEADERS(token).AUTH, ...HEADERS().JSON }
+                : { ...HEADERS(token).AUTH }
             await networkRequest(
                 URL_EXT.LOGOUT, 
                 RequestMethod.POST, 
-                headers
+                headers,
+                pushToken ? JSON.stringify({ push_token: pushToken }) : undefined
             );
             return true;
         } catch (error) {

@@ -6,6 +6,7 @@ import { AuthFields } from '@/features/auth/AuthFields';
 import { AuthType } from '@/features/auth/AuthType';
 import { useUser } from './UserContext';
 import { router } from 'expo-router';
+import { PushService } from '@/features/notifications/PushService';
 
 interface AuthContextType {
     tokenRef: React.MutableRefObject<string | null>;
@@ -45,6 +46,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (storedToken && storedRefreshToken) {
                 setToken(storedToken);
                 setRefreshToken(storedRefreshToken);
+                PushService.register(storedToken);
             }
         };
 
@@ -60,6 +62,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await AsyncStorage.setItem('token', access);
             await AsyncStorage.setItem('refreshToken', refresh);
             setUserTokenWarned([false, false, false]);
+            PushService.register(access);
             return true;
         } catch (error) {
             if (error instanceof NetworkError && error.status === 403) {
@@ -81,12 +84,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logout = async () => {
         try {
             if (!tokenRef.current) return;
+            const authToken = tokenRef.current;
+            const pushToken = await PushService.forget();
             setUser(null);
             setToken(null);
             setRefreshToken(null);
             await AsyncStorage.removeItem('token');
             await AsyncStorage.removeItem('refreshToken');
-            await AuthService.logout(tokenRef.current);
+            await AuthService.logout(authToken, pushToken);
         } catch (error) {
             throw error;
         } finally {
@@ -99,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!tokenRef.current) return false;
         const deleted = await AuthService.deleteAccount(tokenRef.current, password);
         if (deleted) {
+            await PushService.forget();
             setUser(null);
             setToken(null);
             setRefreshToken(null);
