@@ -19,7 +19,7 @@ export default function PlayOnline () {
     const { routeTo, routeReplace } = useRouteTo();
     const { addToast } = useToast();
     const { user } = useUser();
-    const { pollUserGames, createMatchmaking, cancelMatchmaking } = useGamePoll();
+    const { pollUserGames, createMatchmaking, cancelMatchmaking, enablePushNotifications } = useGamePoll();
     const [yourTurnGames, setYourTurnGames] = useState<Game[]>([]);
     const [theirTurnGames, setTheirTurnGames] = useState<Game[]>([]);
     const [completedGames, setCompletedGames] = useState<Game[]>([]);
@@ -116,7 +116,9 @@ export default function PlayOnline () {
 
     const gameLengths: number[] = [1, 3, 5, 7]
 
-    const createNewGame = () => {
+    const createNewGame = async () => {
+        // Starting a game is when notifications become useful, so this is when we ask (the system only prompts once).
+        await enablePushNotifications().catch(() => {});
         let toastActions: ToastAction[] = []
         for (let index = 0; index < gameLengths.length; index++) {
             const label: string = `${gameLengths[index]} Days`

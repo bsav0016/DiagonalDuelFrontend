@@ -39,6 +39,16 @@ export function NotificationRouter() {
         })();
     }, []);
 
+    // A notification arriving while the app is open means the games changed, so refresh now instead of waiting for the next poll.
+    const pollRef = useRef(pollUserGames);
+    useEffect(() => { pollRef.current = pollUserGames; });
+    useEffect(() => {
+        const subscription = Notifications.addNotificationReceivedListener(() => {
+            pollRef.current().catch(() => {});
+        });
+        return () => subscription.remove();
+    }, []);
+
     useEffect(() => {
         if (!lastResponse) return;
         const id = lastResponse.notification.request.identifier;

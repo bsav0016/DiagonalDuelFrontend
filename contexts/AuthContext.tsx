@@ -61,9 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await AsyncStorage.setItem('token', access);
             await AsyncStorage.setItem('refreshToken', refresh);
             setUserTokenWarned([false, false, false]);
-            // Ask for notification permission the first time someone signs in on this device. Not awaited:
-            // push is optional and must not delay or fail the login.
-            registerForPush(access, true);
+            // Only registers if permission was already granted; the prompt itself waits until the user
+            // starts an online game. Not awaited: push is optional and must not delay or fail the login.
+            registerForPush(access, false);
             return true;
         } catch (error) {
             if (error instanceof NetworkError && error.status === 403) {
