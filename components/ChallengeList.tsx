@@ -4,6 +4,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { GeneralButton } from "@/components/GeneralButton";
 import { Challenge } from "@/features/challenges/Challenge";
+import { Colors } from "@/constants/Colors";
 
 interface ChallengeListProps {
     incoming: Challenge[];
@@ -11,12 +12,14 @@ interface ChallengeListProps {
     onAccept: (challenge: Challenge) => void;
     onDecline: (challenge: Challenge) => void;
     onCancel: (challenge: Challenge) => void;
+    // Shown on open invites (the ones with a code) so they can be sent again.
+    onShare?: (challenge: Challenge) => void;
 }
 
 const turns = (days: number) => `${days}-day turns`;
 
 // Challenges waiting for an answer: ones sent to you (accept or decline) and ones you sent (cancel).
-export function ChallengeList({ incoming, outgoing, onAccept, onDecline, onCancel }: ChallengeListProps) {
+export function ChallengeList({ incoming, outgoing, onAccept, onDecline, onCancel, onShare }: ChallengeListProps) {
     if (incoming.length === 0 && outgoing.length === 0) {
         return <ThemedText style={styles.empty}>No challenges waiting</ThemedText>;
     }
@@ -39,6 +42,11 @@ export function ChallengeList({ incoming, outgoing, onAccept, onDecline, onCance
                     <ThemedText style={styles.text}>
                         {`Waiting for ${challenge.recipient ?? "someone to open your invite"} (${turns(challenge.days)})`}
                     </ThemedText>
+                    {onShare && challenge.inviteCode &&
+                        <TouchableOpacity testID={`share-${challenge.id}`} onPress={() => onShare(challenge)}>
+                            <Text style={styles.share}>Share</Text>
+                        </TouchableOpacity>
+                    }
                     <TouchableOpacity testID={`cancel-${challenge.id}`} onPress={() => onCancel(challenge)}>
                         <Text style={styles.cancel}>Cancel</Text>
                     </TouchableOpacity>
@@ -80,6 +88,12 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         textAlign: "center",
+    },
+
+    share: {
+        color: Colors.button.background,
+        fontSize: 16,
+        textDecorationLine: "underline",
     },
 
     cancel: {

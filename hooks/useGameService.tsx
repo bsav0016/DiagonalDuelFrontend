@@ -100,6 +100,21 @@ export function useGameService() {
         return await ChallengeService.send(token, username, days);
     };
 
+    const createInvite = async (days: number) => {
+        const token = await getToken();
+        return await ChallengeService.createInvite(token, days);
+    };
+
+    const previewInvite = async (code: string) => {
+        const token = await getToken();
+        return await ChallengeService.previewInvite(token, code);
+    };
+
+    const acceptInvite = async (code: string) => {
+        const token = await getToken();
+        return await ChallengeService.acceptInvite(token, code);
+    };
+
     const requestRematch = async (gameId: number) => {
         const token = await getToken();
         return await ChallengeService.rematch(token, gameId);
@@ -140,6 +155,9 @@ export function useGameService() {
         resign,
         getChallenges,
         sendChallenge,
+        createInvite,
+        previewInvite,
+        acceptInvite,
         requestRematch,
         acceptChallenge,
         declineChallenge,

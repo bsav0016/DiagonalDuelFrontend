@@ -3,6 +3,7 @@ export enum Routes {
     PlayComputer = 'play-computer',
     PlayOnline = 'play-online',
     NewChallenge = 'new-challenge',
+    JoinChallenge = 'join-challenge',
     Support = 'support',
     Game = 'game-screen',
     Login = 'login-screen',

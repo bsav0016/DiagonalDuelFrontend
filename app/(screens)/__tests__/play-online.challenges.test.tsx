@@ -16,6 +16,7 @@ const mockAccept = jest.fn();
 const mockDecline = jest.fn();
 const mockCancel = jest.fn();
 const mockUser = new User('ann', 'a@b.c', []);
+const mockShareInvite = jest.fn();
 
 jest.mock('expo-router', () => {
     const React = jest.requireActual('react');
@@ -40,11 +41,12 @@ jest.mock('@/hooks/useGameService', () => ({
 }));
 jest.mock('@/components/CustomHeaderView', () => ({ CustomHeaderView: ({ children }: any) => children }));
 jest.mock('@/components/CountdownTimer', () => ({ CountdownTimer: () => null }));
+jest.mock('@/features/challenges/invite', () => ({ shareInvite: (...args: unknown[]) => mockShareInvite(...args) }));
 
 jest.setTimeout(30000);
 
 const challenge = (overrides: Partial<Challenge> = {}): Challenge => ({
-    id: 1, challenger: 'bob', recipient: 'ann', days: 3, expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false,
+    id: 1, challenger: 'bob', recipient: 'ann', days: 3, expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false, inviteCode: null,
     ...overrides,
 });
 
@@ -53,9 +55,14 @@ const newGame = () => Game.fromData({
     updated_at: '2026-11-10T10:00:00Z', time_limit: '3 00:00:00', winner: null,
 });
 
+// Screens are unmounted after each test so their timers (a wait for the stored user, the 15-second poll) stop.
+const rendered: ReturnType<typeof create>[] = [];
+afterEach(async () => { await act(async () => { rendered.splice(0).forEach((tree) => tree.unmount()); }); });
+
 async function render() {
     let tree!: ReturnType<typeof create>;
     await act(async () => { tree = create(<PlayOnline />); });
+    rendered.push(tree);
     const text = () => JSON.stringify(tree.toJSON());
     const button = (title: string) => tree.root.findAll(
         (n: ReactTestInstance) => n.props.title === title && typeof n.props.onPress === 'function');
@@ -128,5 +135,35 @@ describe('Play Online challenges', () => {
         mockGetChallenges.mockRejectedValue(new Error('offline'));
         const { text } = await render();
         expect(text()).toContain('No challenges waiting');
+    });
+
+    it('opens the join screen from Join with a Code', async () => {
+        const { button } = await render();
+        await act(async () => { button('Join with a Code')[0].props.onPress(); });
+        expect(mockRouteTo).toHaveBeenCalledWith(Routes.JoinChallenge);
+    });
+
+    it('shares an open invite again from the list', async () => {
+        mockShareInvite.mockResolvedValue(undefined);
+        mockGetChallenges.mockResolvedValue({
+            incoming: [], outgoing: [challenge({ id: 4, challenger: 'ann', recipient: null, days: 5, inviteCode: 'ABCD2345' })],
+        });
+        const { tree } = await render();
+
+        await act(async () => { await tree.root.findByProps({ testID: 'share-4' }).props.onPress(); });
+
+        expect(mockShareInvite).toHaveBeenCalledWith('ABCD2345', 5);
+    });
+
+    it('says so when the share sheet cannot be opened', async () => {
+        mockShareInvite.mockRejectedValue(new Error('no share sheet'));
+        mockGetChallenges.mockResolvedValue({
+            incoming: [], outgoing: [challenge({ id: 4, challenger: 'ann', recipient: null, inviteCode: 'ABCD2345' })],
+        });
+        const { tree } = await render();
+
+        await act(async () => { await tree.root.findByProps({ testID: 'share-4' }).props.onPress(); });
+
+        expect(mockAddToast).toHaveBeenCalledWith('Could not open the share sheet');
     });
 });

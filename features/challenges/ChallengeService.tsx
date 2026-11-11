@@ -5,6 +5,12 @@ import { NetworkError } from "@/lib/networkRequests/NetworkError";
 import { Game } from "@/features/game/models/Game";
 import { Challenge, challengeFromData } from "./Challenge";
 
+// What an invite code opens: who is asking, and whether this player can still accept it.
+export interface InvitePreview {
+    challenge: Challenge;
+    canAccept: boolean;
+}
+
 export interface Challenges {
     incoming: Challenge[];
     outgoing: Challenge[];
@@ -32,6 +38,37 @@ export const ChallengeService = {
             JSON.stringify({ username: username.trim(), time_limit_days: days })
         );
         return challengeFromData(response.data);
+    },
+
+    // An open challenge for whoever receives the invite; the answer carries the code to share.
+    async createInvite(token: string, days: number): Promise<Challenge> {
+        const response = await networkRequest(
+            URL_EXT.CHALLENGES,
+            RequestMethod.POST,
+            authJson(token),
+            JSON.stringify({ time_limit_days: days })
+        );
+        return challengeFromData(response.data);
+    },
+
+    // Looks an invite code up without accepting it. The server ignores case, spaces and dashes in the code.
+    async previewInvite(token: string, code: string): Promise<InvitePreview> {
+        const response = await networkRequest(
+            `${URL_EXT.CHALLENGES}${URL_EXT.INVITE}${encodeURIComponent(code.trim())}/`,
+            RequestMethod.GET,
+            { ...HEADERS(token).AUTH }
+        );
+        return { challenge: challengeFromData(response.data), canAccept: response.data?.can_accept === true };
+    },
+
+    // Accepts an invite code and answers with the game that was created.
+    async acceptInvite(token: string, code: string): Promise<Game> {
+        const response = await networkRequest(
+            `${URL_EXT.CHALLENGES}${URL_EXT.INVITE}${encodeURIComponent(code.trim())}/`,
+            RequestMethod.POST,
+            { ...HEADERS(token).AUTH }
+        );
+        return Game.fromData(response.data?.game);
     },
 
     // The opponent and the time limit come from the finished game.

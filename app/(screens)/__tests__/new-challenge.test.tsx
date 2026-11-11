@@ -7,14 +7,17 @@ const mockAddToast = jest.fn();
 const mockRouteBack = jest.fn();
 const mockSendChallenge = jest.fn();
 const mockEnablePush = jest.fn();
+const mockCreateInvite = jest.fn();
+const mockShareInvite = jest.fn();
 
 jest.mock('@/contexts/ToastContext', () => ({ useToast: () => ({ addToast: mockAddToast }) }));
 jest.mock('@/contexts/RouteContext', () => ({ useRouteTo: () => ({ routeBack: mockRouteBack }) }));
 jest.mock('@/hooks/useGameService', () => ({
-    useGameService: () => ({ sendChallenge: mockSendChallenge, enablePushNotifications: mockEnablePush }),
+    useGameService: () => ({ sendChallenge: mockSendChallenge, createInvite: mockCreateInvite, enablePushNotifications: mockEnablePush }),
 }));
 jest.mock('@/components/CustomHeaderView', () => ({ CustomHeaderView: ({ children }: any) => children }));
 jest.mock('@/components/LoadingSpinner', () => ({ LoadingSpinner: () => null }));
+jest.mock('@/features/challenges/invite', () => ({ shareInvite: (...args: unknown[]) => mockShareInvite(...args) }));
 
 jest.setTimeout(30000);
 
@@ -35,6 +38,8 @@ describe('New challenge screen', () => {
         jest.clearAllMocks();
         mockSendChallenge.mockResolvedValue({});
         mockEnablePush.mockResolvedValue(undefined);
+        mockCreateInvite.mockResolvedValue({ inviteCode: 'ABCD2345' });
+        mockShareInvite.mockResolvedValue(undefined);
     });
 
     it('offers the same time limits as matchmaking, starting at one day', async () => {
@@ -90,5 +95,45 @@ describe('New challenge screen', () => {
 
         expect(mockAddToast).toHaveBeenCalledWith('Player not found.');
         expect(mockRouteBack).not.toHaveBeenCalled();
+    });
+
+    it('creates an open invite with the chosen days, opens the share sheet with its code, then goes back', async () => {
+        const { press } = await render();
+        await press('7 Days');
+
+        await press('Invite With a Link');
+
+        expect(mockCreateInvite).toHaveBeenCalledWith(7);
+        expect(mockShareInvite).toHaveBeenCalledWith('ABCD2345', 7);
+        expect(mockSendChallenge).not.toHaveBeenCalled();
+        expect(mockRouteBack).toHaveBeenCalled();
+    });
+
+    it('does not need a username to invite', async () => {
+        const { press } = await render();
+        await press('Invite With a Link');
+        expect(mockCreateInvite).toHaveBeenCalledWith(1);
+        expect(mockAddToast).not.toHaveBeenCalled();
+    });
+
+    it('stays on the form with the server\'s reason when the invite cannot be created', async () => {
+        mockCreateInvite.mockRejectedValue(new NetworkError('You already have 10 challenges waiting for an answer.', 400));
+        const { press } = await render();
+
+        await press('Invite With a Link');
+
+        expect(mockAddToast).toHaveBeenCalledWith('You already have 10 challenges waiting for an answer.');
+        expect(mockShareInvite).not.toHaveBeenCalled();
+        expect(mockRouteBack).not.toHaveBeenCalled();
+    });
+
+    it('tells you the invite exists when the share sheet fails, and still goes back', async () => {
+        mockShareInvite.mockRejectedValue(new Error('no share sheet'));
+        const { press } = await render();
+
+        await press('Invite With a Link');
+
+        expect(mockAddToast).toHaveBeenCalledWith('Invite created. Share it again from Play Online.');
+        expect(mockRouteBack).toHaveBeenCalled();
     });
 });

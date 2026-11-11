@@ -23,8 +23,12 @@ describe('challengeFromData', () => {
     it('reads a named challenge', () => {
         expect(challengeFromData(challengeData())).toEqual({
             id: 5, challenger: 'ann', recipient: 'bob', days: 3,
-            expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false,
+            expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false, inviteCode: null,
         });
+    });
+
+    it('reads the invite code the sender is given', () => {
+        expect(challengeFromData(challengeData({ recipient: null, invite_token: 'ABCD2345' })).inviteCode).toBe('ABCD2345');
     });
 
     it('marks a rematch and an open invite', () => {
@@ -115,5 +119,68 @@ describe('ChallengeService', () => {
     it('lets the server\'s reason reach the caller', async () => {
         mockedRequest.mockRejectedValue(new NetworkError('You already challenged bob.', 400));
         await expect(ChallengeService.send('access', 'bob', 1)).rejects.toThrow('You already challenged bob.');
+    });
+});
+
+describe('ChallengeService invites', () => {
+    beforeEach(() => mockedRequest.mockReset());
+
+    it('creates an open invite with only the days and returns its code', async () => {
+        mockedRequest.mockResolvedValue({ status: 201, data: challengeData({ recipient: null, invite_token: 'ABCD2345' }) });
+
+        const challenge = await ChallengeService.createInvite('access', 5);
+
+        const [url, method, headers, body] = mockedRequest.mock.calls[0];
+        expect(url).toBe('challenges/');
+        expect(method).toBe(RequestMethod.POST);
+        expect(headers.Authorization).toBe('Bearer access');
+        expect(JSON.parse(body)).toEqual({ time_limit_days: 5 });
+        expect(challenge.inviteCode).toBe('ABCD2345');
+        expect(challenge.recipient).toBeNull();
+    });
+
+    it('looks a code up without accepting it', async () => {
+        mockedRequest.mockResolvedValue({ status: 200, data: { ...challengeData({ recipient: null }), can_accept: true } });
+
+        const preview = await ChallengeService.previewInvite('access', ' abcd-2345 ');
+
+        const [url, method, headers] = mockedRequest.mock.calls[0];
+        expect(url).toBe('challenges/invite/abcd-2345/');
+        expect(method).toBe(RequestMethod.GET);
+        expect(headers.Authorization).toBe('Bearer access');
+        expect(preview.canAccept).toBe(true);
+        expect(preview.challenge.challenger).toBe('ann');
+    });
+
+    it('treats anything but an explicit yes as not acceptable', async () => {
+        mockedRequest.mockResolvedValue({ status: 200, data: { ...challengeData(), can_accept: false } });
+        expect((await ChallengeService.previewInvite('access', 'X')).canAccept).toBe(false);
+        mockedRequest.mockResolvedValue({ status: 200, data: challengeData() });
+        expect((await ChallengeService.previewInvite('access', 'X')).canAccept).toBe(false);
+    });
+
+    it('keeps odd characters in a typed code from changing the address', async () => {
+        mockedRequest.mockResolvedValue({ status: 200, data: { ...challengeData(), can_accept: true } });
+
+        await ChallengeService.previewInvite('access', 'a/b?c');
+
+        expect(mockedRequest.mock.calls[0][0]).toBe('challenges/invite/a%2Fb%3Fc/');
+    });
+
+    it('accepts a code and returns the game that was created', async () => {
+        mockedRequest.mockResolvedValue({ status: 200, data: { challenge: challengeData(), game: gameData() } });
+
+        const game = await ChallengeService.acceptInvite('access', 'ABCD2345');
+
+        const [url, method, headers] = mockedRequest.mock.calls[0];
+        expect(url).toBe('challenges/invite/ABCD2345/');
+        expect(method).toBe(RequestMethod.POST);
+        expect(headers.Authorization).toBe('Bearer access');
+        expect(game.gameId).toBe(9);
+    });
+
+    it('lets the server\'s reason reach the caller', async () => {
+        mockedRequest.mockRejectedValue(new NetworkError('Challenge not found.', 404));
+        await expect(ChallengeService.previewInvite('access', 'NOPE')).rejects.toThrow('Challenge not found.');
     });
 });

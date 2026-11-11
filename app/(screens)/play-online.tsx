@@ -12,6 +12,7 @@ import { useLoading } from "@/contexts/LoadingContext";
 import { useGameService } from "@/hooks/useGameService";
 import { ChallengeList } from "@/components/ChallengeList";
 import { Challenge } from "@/features/challenges/Challenge";
+import { shareInvite } from "@/features/challenges/invite";
 import { Routes } from "./Routes";
 import { Game } from "@/features/game/models/Game";
 import { GeneralButton } from "@/components/GeneralButton";
@@ -112,6 +113,15 @@ export default function PlayOnline () {
 
     const onCancelChallenge = (challenge: Challenge) =>
         answerChallenge(() => cancelChallenge(challenge.id), "Could not cancel the challenge");
+
+    const onShareChallenge = async (challenge: Challenge) => {
+        if (!challenge.inviteCode) return;
+        try {
+            await shareInvite(challenge.inviteCode, challenge.days);
+        } catch {
+            addToast("Could not open the share sheet");
+        }
+    };
 
     interface IndividualGameProps {
         game: Game;
@@ -223,12 +233,14 @@ export default function PlayOnline () {
                     <ThemedView>
                         <ThemedText type='subtitle' style={styles.gamesHeaderText}>Friends</ThemedText>
                         <GeneralButton title='Challenge a Friend' onPress={() => routeTo(Routes.NewChallenge)} />
+                        <GeneralButton title='Join with a Code' onPress={() => routeTo(Routes.JoinChallenge)} variant='secondary' />
                         <ChallengeList
                             incoming={incomingChallenges}
                             outgoing={outgoingChallenges}
                             onAccept={onAcceptChallenge}
                             onDecline={onDeclineChallenge}
                             onCancel={onCancelChallenge}
+                            onShare={onShareChallenge}
                         />
                     </ThemedView>
                     <ThemedView style={styles.gameSetView}>
