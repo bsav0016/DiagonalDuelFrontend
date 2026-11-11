@@ -10,11 +10,12 @@ import { useRouteTo } from "@/contexts/RouteContext";
 import { useGameService } from "@/hooks/useGameService";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { CHALLENGE_DAY_OPTIONS } from "@/features/challenges/Challenge";
+import { shareInvite } from "@/features/challenges/invite";
 
 export default function NewChallengeScreen() {
     const { addToast } = useToast();
     const { routeBack } = useRouteTo();
-    const { sendChallenge, enablePushNotifications } = useGameService();
+    const { sendChallenge, createInvite, enablePushNotifications } = useGameService();
     const color = useThemeColor({}, 'text');
     const [username, setUsername] = useState<string>("");
     const [days, setDays] = useState<number>(CHALLENGE_DAY_OPTIONS[0]);
@@ -39,6 +40,29 @@ export default function NewChallengeScreen() {
         } finally {
             setSending(false);
         }
+    };
+
+    // An open invite: nobody is named, so whoever gets the link or code first can accept it.
+    const sendInvite = async () => {
+        setSending(true);
+        let created;
+        try {
+            await enablePushNotifications().catch(() => {});
+            created = await createInvite(days);
+        } catch (error) {
+            addToast(error instanceof Error ? error.message : "Could not create the invite");
+            setSending(false);
+            return;
+        }
+        try {
+            await shareInvite(created.inviteCode ?? "", days);
+        } catch {
+            // The invite exists either way: it is listed on Play Online, where it can be shared again.
+            addToast("Invite created. Share it again from Play Online.");
+        } finally {
+            setSending(false);
+        }
+        routeBack();
     };
 
     return (
@@ -78,6 +102,12 @@ export default function NewChallengeScreen() {
                             ))}
                         </ThemedView>
                         {sending ? <LoadingSpinner /> : <GeneralButton title="Send Challenge" onPress={send} />}
+                        {!sending &&
+                            <>
+                                <ThemedText style={styles.help}>Or invite someone who is not in the list: you get a link and a code to send them.</ThemedText>
+                                <GeneralButton title="Invite With a Link" onPress={sendInvite} variant="secondary" fontSize={18} />
+                            </>
+                        }
                     </ThemedView>
                 </KeyboardAvoidingView>
             </ScrollView>

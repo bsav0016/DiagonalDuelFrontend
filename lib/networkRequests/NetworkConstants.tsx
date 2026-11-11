@@ -32,6 +32,7 @@ export const URL_EXT = {
     ACCEPT: 'accept/',
     DECLINE: 'decline/',
     CANCEL: 'cancel/',
+    INVITE: 'invite/',
     MOVES: 'moves/',
     RESIGN: 'resign/',
     TOKEN: 'token/',

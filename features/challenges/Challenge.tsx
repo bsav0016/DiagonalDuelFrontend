@@ -13,6 +13,8 @@ export interface Challenge {
     expiresAt: Date;
     // True when it asks for a rematch of a finished game.
     rematch: boolean;
+    // The code that opens an open invite; the server only gives it to the sender.
+    inviteCode: string | null;
 }
 
 export function challengeFromData(data: any): Challenge {
@@ -32,5 +34,6 @@ export function challengeFromData(data: any): Challenge {
         days: data.time_limit_days,
         expiresAt: new Date(data.expires_at),
         rematch: data.rematch_of !== null && data.rematch_of !== undefined,
+        inviteCode: typeof data.invite_token === "string" ? data.invite_token : null,
     };
 }

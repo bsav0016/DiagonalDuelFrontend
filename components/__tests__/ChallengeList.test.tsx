@@ -4,18 +4,21 @@ import { ChallengeList } from '../ChallengeList';
 import { Challenge } from '@/features/challenges/Challenge';
 
 const challenge = (overrides: Partial<Challenge> = {}): Challenge => ({
-    id: 1, challenger: 'ann', recipient: 'bob', days: 3, expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false,
+    id: 1, challenger: 'ann', recipient: 'bob', days: 3, expiresAt: new Date('2026-11-17T10:00:00Z'), rematch: false, inviteCode: null,
     ...overrides,
 });
 
-async function render(incoming: Challenge[], outgoing: Challenge[]) {
+async function render(incoming: Challenge[], outgoing: Challenge[], withShare = false) {
     const handlers = { onAccept: jest.fn(), onDecline: jest.fn(), onCancel: jest.fn() };
+    const onShare = jest.fn();
     let tree!: ReturnType<typeof create>;
-    await act(async () => { tree = create(<ChallengeList incoming={incoming} outgoing={outgoing} {...handlers} />); });
+    await act(async () => {
+        tree = create(<ChallengeList incoming={incoming} outgoing={outgoing} {...handlers} onShare={withShare ? onShare : undefined} />);
+    });
     const text = () => JSON.stringify(tree.toJSON());
     const button = (title: string) => tree.root.findAll(
         (n: ReactTestInstance) => n.props.title === title && typeof n.props.onPress === 'function');
-    return { tree, text, button, ...handlers };
+    return { tree, text, button, onShare, ...handlers };
 }
 
 describe('ChallengeList', () => {
@@ -60,5 +63,22 @@ describe('ChallengeList', () => {
     it('describes an open invite that has nobody named', async () => {
         const { text } = await render([], [challenge({ recipient: null })]);
         expect(text()).toContain('Waiting for someone to open your invite');
+    });
+
+    it('offers Share on an open invite that has a code, and shares that challenge', async () => {
+        const invite = challenge({ id: 8, recipient: null, inviteCode: 'ABCD2345' });
+        const { tree, onShare } = await render([], [invite], true);
+
+        await act(async () => { tree.root.findByProps({ testID: 'share-8' }).props.onPress(); });
+
+        expect(onShare).toHaveBeenCalledWith(invite);
+    });
+
+    it('offers no Share on a challenge sent to a named player, or when sharing is not wired up', async () => {
+        const named = await render([], [challenge({ id: 1, inviteCode: null })], true);
+        expect(named.tree.root.findAllByProps({ testID: 'share-1' })).toHaveLength(0);
+
+        const unwired = await render([], [challenge({ id: 2, recipient: null, inviteCode: 'ABCD2345' })], false);
+        expect(unwired.tree.root.findAllByProps({ testID: 'share-2' })).toHaveLength(0);
     });
 });
