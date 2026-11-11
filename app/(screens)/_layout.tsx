@@ -26,6 +26,7 @@ export default function PagesLayout() {
                       <Stack.Screen name={Routes.HomeScreen} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.PlayComputer} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.PlayOnline} options={{ headerShown: false }} />
+                      <Stack.Screen name={Routes.NewChallenge} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Support} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Game} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Login} options={{ headerShown: false }} />

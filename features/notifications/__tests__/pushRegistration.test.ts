@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { gameIdFromNotificationData, getPushToken, registerForPush, unregisterFromPush } from '../pushRegistration';
+import { gameIdFromNotificationData, getPushToken, isChallengeNotification, registerForPush, unregisterFromPush } from '../pushRegistration';
 import { PushService } from '../PushService';
 
 jest.mock('expo-notifications', () => ({
@@ -126,6 +126,18 @@ describe('gameIdFromNotificationData', () => {
         const others = [null, undefined, 'x', {}, { type: 'game' }, { type: 'game', gameId: '7' }, { type: 'promo', gameId: 7 }];
         for (const data of others) {
             expect(gameIdFromNotificationData(data)).toBeNull();
+        }
+    });
+});
+
+describe('isChallengeNotification', () => {
+    it('recognises a challenge notification', () => {
+        expect(isChallengeNotification({ type: 'challenge', challengeId: 3 })).toBe(true);
+    });
+
+    it('ignores game notifications and anything malformed', () => {
+        for (const data of [null, undefined, 'challenge', {}, { type: 'game', gameId: 7 }, { type: 'challenges' }]) {
+            expect(isChallengeNotification(data)).toBe(false);
         }
     });
 });

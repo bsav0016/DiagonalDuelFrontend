@@ -73,7 +73,12 @@ export async function unregisterFromPush(accessToken: string): Promise<void> {
     }
 }
 
-// The backend puts {"type": "game", "gameId": <number>} on every notification.
+// A challenge notification ({"type": "challenge", "challengeId": <number>}) is answered on the Play Online screen.
+export function isChallengeNotification(data: unknown): boolean {
+    return !!data && typeof data === 'object' && (data as { type?: unknown }).type === 'challenge';
+}
+
+// The backend puts {"type": "game", "gameId": <number>} on game notifications.
 export function gameIdFromNotificationData(data: unknown): number | null {
     if (!data || typeof data !== 'object') return null;
     const { type, gameId } = data as { type?: unknown; gameId?: unknown };

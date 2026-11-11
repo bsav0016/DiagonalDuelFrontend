@@ -3,6 +3,7 @@ import { GameService } from "../features/game/GameService";
 import { useToast } from "@/contexts/ToastContext";
 import { formatTime } from "@/lib/TimeFormatUtil";
 import { registerForPush } from "@/features/notifications/pushRegistration";
+import { ChallengeService } from "../features/challenges/ChallengeService";
 
 export function useGameService() {
     const { tokenRef, refreshTokenRef, userTokenWarnedRef, setToken, setUserTokenWarned, logout } = useAuth();
@@ -89,6 +90,36 @@ export function useGameService() {
         return await GameService.updateComputerScore(token, computerLevel);
     }
 
+    const getChallenges = async () => {
+        const token = await getToken();
+        return await ChallengeService.list(token);
+    };
+
+    const sendChallenge = async (username: string, days: number) => {
+        const token = await getToken();
+        return await ChallengeService.send(token, username, days);
+    };
+
+    const requestRematch = async (gameId: number) => {
+        const token = await getToken();
+        return await ChallengeService.rematch(token, gameId);
+    };
+
+    const acceptChallenge = async (id: number) => {
+        const token = await getToken();
+        return await ChallengeService.accept(token, id);
+    };
+
+    const declineChallenge = async (id: number) => {
+        const token = await getToken();
+        return await ChallengeService.decline(token, id);
+    };
+
+    const cancelChallenge = async (id: number) => {
+        const token = await getToken();
+        return await ChallengeService.cancel(token, id);
+    };
+
     // Refreshes this device's push token for an already signed-in user. Does not show the permission prompt.
     const refreshPushRegistration = async () => {
         const token = await getToken();
@@ -107,6 +138,12 @@ export function useGameService() {
         getAllGames,
         makeMove,
         resign,
+        getChallenges,
+        sendChallenge,
+        requestRematch,
+        acceptChallenge,
+        declineChallenge,
+        cancelChallenge,
         getMatchmaking,
         startMatchmaking,
         stopMatchmaking,

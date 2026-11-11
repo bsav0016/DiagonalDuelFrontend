@@ -5,15 +5,15 @@ import { useRouteTo } from '@/contexts/RouteContext';
 import { useGamePoll } from '@/contexts/GamePollContext';
 import { useGameService } from '@/hooks/useGameService';
 import { Routes } from '@/app/(screens)/Routes';
-import { gameIdFromNotificationData } from '@/features/notifications/pushRegistration';
+import { gameIdFromNotificationData, isChallengeNotification } from '@/features/notifications/pushRegistration';
 
 // The stored user loads a moment after launch, so wait for it (briefly) before acting.
 const USER_WAIT_MS = 10000;
 const USER_POLL_MS = 250;
 
 /**
- * Renders nothing. Keeps this device's push token current, and opens the game a tapped notification
- * is about (including when the tap is what launched the app).
+ * Renders nothing. Keeps this device's push token current, and opens the game (or, for a challenge, the Play Online
+ * screen) a tapped notification is about, including when the tap is what launched the app.
  */
 export function NotificationRouter() {
     const { userRef } = useUser();
@@ -55,7 +55,15 @@ export function NotificationRouter() {
         if (handledResponse.current === id) return;
         handledResponse.current = id;
 
-        const gameId = gameIdFromNotificationData(lastResponse.notification.request.content.data);
+        const data = lastResponse.notification.request.content.data;
+        if (isChallengeNotification(data)) {
+            (async () => {
+                if (await whenUserLoaded()) routeTo(Routes.PlayOnline);
+            })();
+            return;
+        }
+
+        const gameId = gameIdFromNotificationData(data);
         if (gameId === null) return;
 
         (async () => {
