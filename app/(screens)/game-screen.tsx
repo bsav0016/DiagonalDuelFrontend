@@ -49,7 +49,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const { addToast } = useToast();
     const { user, userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
-    const { makeMove, resign, updateComputerScore } = useGameService();
+    const { makeMove, resign, requestRematch, updateComputerScore } = useGameService();
     const { pollUserGames } = useGamePoll();
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
@@ -76,6 +76,9 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const opponentName = gameInstance.player1.username === user?.username
         ? gameInstance.player2.username
         : gameInstance.player1.username;
+
+    const [rematchSent, setRematchSent] = useState<boolean>(false);
+    const canRematch = gameInstance.gameType === GameType.Online && !!gameInstance.winner && !!user && !rematchSent;
 
     const timeDiff: number = gameInstance.moveTime
             ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
@@ -283,6 +286,21 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
         }
     }
 
+    // Asks the opponent of this finished game to play again; the server picks who moves first.
+    const sendRematch = async () => {
+        if (!gameInstance.gameId) return;
+        setLoading(true);
+        try {
+            await requestRematch(gameInstance.gameId);
+            setRematchSent(true);
+            addToast(`Rematch request sent to ${opponentName}`);
+        } catch (error) {
+            addToast(error instanceof Error ? error.message : "Could not send the rematch request");
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const resetSelectedButton = () => {
         setDisplayConfirm(false);
         setSelectedMove(null);
@@ -370,6 +388,9 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 }
                 { canResign &&
                     <GeneralButton title='Resign' onPress={confirmResign} variant='secondary' fontSize={16} />
+                }
+                { canRematch &&
+                    <GeneralButton title='Rematch' onPress={sendRematch} variant='secondary' fontSize={16} />
                 }
             </ThemedView>
             { displayConfirm &&

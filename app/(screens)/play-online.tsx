@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from "react-native";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
@@ -8,6 +8,10 @@ import { useRouteTo } from "@/contexts/RouteContext";
 import { useUser } from "@/contexts/UserContext";
 import { ToastAction, useToast } from "@/contexts/ToastContext";
 import { useGamePoll } from "@/contexts/GamePollContext";
+import { useLoading } from "@/contexts/LoadingContext";
+import { useGameService } from "@/hooks/useGameService";
+import { ChallengeList } from "@/components/ChallengeList";
+import { Challenge } from "@/features/challenges/Challenge";
 import { Routes } from "./Routes";
 import { Game } from "@/features/game/models/Game";
 import { GeneralButton } from "@/components/GeneralButton";
@@ -23,6 +27,11 @@ export default function PlayOnline () {
     const [yourTurnGames, setYourTurnGames] = useState<Game[]>([]);
     const [theirTurnGames, setTheirTurnGames] = useState<Game[]>([]);
     const [completedGames, setCompletedGames] = useState<Game[]>([]);
+    const { setLoading } = useLoading();
+    const { getChallenges, acceptChallenge, declineChallenge, cancelChallenge } = useGameService();
+    const [incomingChallenges, setIncomingChallenges] = useState<Challenge[]>([]);
+    const [outgoingChallenges, setOutgoingChallenges] = useState<Challenge[]>([]);
+    const signedIn = user !== null;
 
     const textColor = useThemeColor({}, 'text');
 
@@ -55,6 +64,54 @@ export default function PlayOnline () {
             setCompletedGames(completed);
         }, [user])
     );
+
+    // The hook hands out new functions every render; the ref lets the callback below stay the same one.
+    const getChallengesRef = useRef(getChallenges);
+    useEffect(() => { getChallengesRef.current = getChallenges; });
+
+    const refreshChallenges = useCallback(async () => {
+        try {
+            const challenges = await getChallengesRef.current();
+            setIncomingChallenges(challenges.incoming);
+            setOutgoingChallenges(challenges.outgoing);
+        } catch (error) {
+            console.error("Error fetching challenges:", error);
+        }
+    }, []);
+
+    // Challenges are checked when the screen opens and then every 15 seconds, like the game list.
+    useFocusEffect(
+        React.useCallback(() => {
+            if (!signedIn) return;
+            refreshChallenges();
+            const polling = setInterval(refreshChallenges, 15000);
+            return () => clearInterval(polling);
+        }, [signedIn, refreshChallenges])
+    );
+
+    const answerChallenge = async (action: () => Promise<void>, failure: string) => {
+        setLoading(true);
+        try {
+            await action();
+        } catch (error) {
+            addToast(error instanceof Error ? error.message : failure);
+        } finally {
+            setLoading(false);
+            refreshChallenges();
+        }
+    };
+
+    const onAcceptChallenge = (challenge: Challenge) => answerChallenge(async () => {
+        const game = await acceptChallenge(challenge.id);
+        await pollUserGames();
+        goToGame(game);
+    }, "Could not accept the challenge");
+
+    const onDeclineChallenge = (challenge: Challenge) =>
+        answerChallenge(() => declineChallenge(challenge.id), "Could not decline the challenge");
+
+    const onCancelChallenge = (challenge: Challenge) =>
+        answerChallenge(() => cancelChallenge(challenge.id), "Could not cancel the challenge");
 
     interface IndividualGameProps {
         game: Game;
@@ -162,6 +219,17 @@ export default function PlayOnline () {
                                 <ThemedText style={styles.noGamesText}>No active matchmaking</ThemedText>
                             )
                         }
+                    </ThemedView>
+                    <ThemedView>
+                        <ThemedText type='subtitle' style={styles.gamesHeaderText}>Friends</ThemedText>
+                        <GeneralButton title='Challenge a Friend' onPress={() => routeTo(Routes.NewChallenge)} />
+                        <ChallengeList
+                            incoming={incomingChallenges}
+                            outgoing={outgoingChallenges}
+                            onAccept={onAcceptChallenge}
+                            onDecline={onDeclineChallenge}
+                            onCancel={onCancelChallenge}
+                        />
                     </ThemedView>
                     <ThemedView style={styles.gameSetView}>
                         <ThemedText type='subtitle' style={styles.gamesHeaderText}>Your Turn!</ThemedText>
