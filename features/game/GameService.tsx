@@ -4,7 +4,16 @@ import { RequestMethod } from "@/lib/networkRequests/RequestMethod";
 import { HEADERS, URL_EXT } from "@/lib/networkRequests/NetworkConstants";
 import { NetworkError } from "@/lib/networkRequests/NetworkError";
 import { MoveDTO } from "./dtos/MoveDTO";
+import { GameRecord, gameRecordFromData } from "./models/GameRecord";
 import { jwtDecode } from "jwt-decode";
+
+// What the server says about the user's games: the ones to show, whether older finished ones exist,
+// and the win/loss/draw record over all of them.
+export interface GameList {
+    games: Game[];
+    hasMoreCompleted: boolean;
+    record: GameRecord | null;
+}
 
 interface RefreshTokenReturn {
     newToken: string;
@@ -53,13 +62,14 @@ export const GameService = {
         }
     },
 
-    async getAllGames(token: string): Promise<Game[]> {
+    // Every game still being played plus the `completedLimit` most recent finished ones (all of them if omitted).
+    async getAllGames(token: string, completedLimit?: number): Promise<GameList> {
         try {
             const headers = {
                 ...HEADERS(token).AUTH
             }
             const response = await networkRequest(
-                URL_EXT.GAMES, 
+                completedLimit === undefined ? URL_EXT.GAMES : `${URL_EXT.GAMES}?completed_limit=${completedLimit}`,
                 RequestMethod.GET,
                 headers
             )
@@ -72,7 +82,11 @@ export const GameService = {
                 const userGame = Game.fromData(game);
                 userGames.push(userGame);
             }
-            return userGames;
+            return {
+                games: userGames,
+                hasMoreCompleted: data.has_more_completed === true,
+                record: gameRecordFromData(data.record),
+            };
         } catch (error) {
             throw(error);
         }

@@ -1,14 +1,18 @@
-import React, { createContext, useContext, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useRef, ReactNode } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useLoading } from "./LoadingContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useAuth } from "./AuthContext";
-import { Game } from "@/features/game/models/Game";
 import { useGameService } from "@/hooks/useGameService";
 
 
+// How many finished games the list asks for to begin with, how many more each "load more" adds, and the most the server allows.
+export const COMPLETED_PAGE = 20;
+export const MAX_COMPLETED = 200;
+
 interface GamePollContextType {
   pollUserGames: () => Promise<void>;
+  loadMoreCompleted: () => Promise<void>;
   createMatchmaking: (days: number) => Promise<void>;
   cancelMatchmaking: (days: number) => Promise<void>;
   enablePushNotifications: () => Promise<void>;
@@ -16,6 +20,7 @@ interface GamePollContextType {
 
 const GamePollContext = createContext<GamePollContextType>({
   pollUserGames: async () => {},
+  loadMoreCompleted: async () => {},
   createMatchmaking: async () => {},
   cancelMatchmaking: async () => {},
   enablePushNotifications: async () => {}
@@ -28,7 +33,13 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   const { logout } = useAuth();
   const { setLoading } = useLoading();
   const { addToast } = useToast();
+  // How many finished games each poll asks for; "load more" raises it, signing out resets it.
+  const completedLimitRef = useRef(COMPLETED_PAGE);
   const { getAllGames, getMatchmaking, startMatchmaking, stopMatchmaking, enablePushNotifications } = useGameService();
+
+  useEffect(() => {
+    if (!signedIn) completedLimitRef.current = COMPLETED_PAGE;
+  }, [signedIn]);
 
   useEffect(() => {
     if (!signedIn) return;
@@ -51,8 +62,8 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
   const pollUserGames = async () => {
     if (!userRef.current) return;
     try {
-      const games: Game[] = await getAllGames();
-      updateUserGames(games);
+      const list = await getAllGames(completedLimitRef.current);
+      updateUserGames(list.games, { record: list.record, hasMoreCompleted: list.hasMoreCompleted });
     } catch (error) {
       if (error instanceof Error && error.message === "Refresh token expired") {
         addToast("It has been over 30 days since you've been active. You must login again.");
@@ -60,6 +71,12 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
       console.error("Error fetching user games:", error);
     }
+  };
+
+  // Shows more finished games: every later poll asks for the bigger number too, so they stay on screen.
+  const loadMoreCompleted = async () => {
+    completedLimitRef.current = Math.min(completedLimitRef.current + COMPLETED_PAGE, MAX_COMPLETED);
+    await pollUserGames();
   };
 
   const pollMatchmaking = async () => {
@@ -141,7 +158,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   return (
     <GamePollContext.Provider
-      value={{ pollUserGames, createMatchmaking, cancelMatchmaking, enablePushNotifications }}
+      value={{ pollUserGames, loadMoreCompleted, createMatchmaking, cancelMatchmaking, enablePushNotifications }}
     >
       {children}
     </GamePollContext.Provider>

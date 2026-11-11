@@ -24,7 +24,7 @@ export default function PlayOnline () {
     const { routeTo, routeReplace } = useRouteTo();
     const { addToast } = useToast();
     const { user } = useUser();
-    const { pollUserGames, createMatchmaking, cancelMatchmaking, enablePushNotifications } = useGamePoll();
+    const { pollUserGames, loadMoreCompleted, createMatchmaking, cancelMatchmaking, enablePushNotifications } = useGamePoll();
     const [yourTurnGames, setYourTurnGames] = useState<Game[]>([]);
     const [theirTurnGames, setTheirTurnGames] = useState<Game[]>([]);
     const [completedGames, setCompletedGames] = useState<Game[]>([]);
@@ -113,6 +113,15 @@ export default function PlayOnline () {
 
     const onCancelChallenge = (challenge: Challenge) =>
         answerChallenge(() => cancelChallenge(challenge.id), "Could not cancel the challenge");
+
+    const onLoadMore = async () => {
+        setLoading(true);
+        try {
+            await loadMoreCompleted();
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const onShareChallenge = async (challenge: Challenge) => {
         if (!challenge.inviteCode) return;
@@ -269,6 +278,9 @@ export default function PlayOnline () {
                         {completedGames.map((game) => (
                             <IndividualGame game={game} key={game.gameId} />
                         ))}
+                        { user?.hasMoreCompleted &&
+                        <GeneralButton title='Load More' onPress={onLoadMore} variant='secondary' fontSize={16} />
+                        }
                     </ThemedView>
                 </ThemedView>
             </ScrollView>

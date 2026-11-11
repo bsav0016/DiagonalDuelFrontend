@@ -55,9 +55,9 @@ export function useGameService() {
         return newToken;
     };
 
-    const getAllGames = async () => {
+    const getAllGames = async (completedLimit?: number) => {
         const token = await getToken();
-        return await GameService.getAllGames(token);
+        return await GameService.getAllGames(token, completedLimit);
     };
 
     const makeMove = async (id: number, row: number, col: number) => {
