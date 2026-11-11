@@ -29,6 +29,7 @@ export const URL_EXT = {
     GAMES: 'games/',
     MATCHMAKING: 'matchmaking/',
     MOVES: 'moves/',
+    RESIGN: 'resign/',
     TOKEN: 'token/',
     TOKEN_REFRESH: 'token/refresh/',
     LEADERBOARD: 'leaderboard/',

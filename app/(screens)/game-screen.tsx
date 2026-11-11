@@ -49,7 +49,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const { addToast } = useToast();
     const { user, userRef, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
-    const { makeMove, updateComputerScore } = useGameService();
+    const { makeMove, resign, updateComputerScore } = useGameService();
     const { pollUserGames } = useGamePoll();
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
@@ -71,6 +71,11 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const [gameAI, setGameAI] = useState<GameAI | null>(null);
     const [computerTurn, setComputerTurn] = useState(false);
     
+
+    const canResign = gameInstance.gameType === GameType.Online && !gameInstance.winner && !!user;
+    const opponentName = gameInstance.player1.username === user?.username
+        ? gameInstance.player2.username
+        : gameInstance.player1.username;
 
     const timeDiff: number = gameInstance.moveTime
             ? gameInstance.moveTime - (Date.now() - (gameInstance.lastUpdated ? new Date(gameInstance.lastUpdated).getTime() : 0))
@@ -254,6 +259,30 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
         }
     }
 
+    // The toast adds its own Cancel, so this only has to say what resigning costs.
+    const confirmResign = () => {
+        addToast(`Resign this game? ${opponentName} wins and your rating drops.`, [{ label: 'Resign', callback: executeResign }]);
+    }
+
+    const executeResign = async () => {
+        setLoading(true);
+        try {
+            if (!gameInstance.gameId) {
+                throw new Error("No game ID");
+            }
+            await resign(gameInstance.gameId);
+            await pollUserGames();
+            routeBack();
+        } catch (error) {
+            console.error(error);
+            addToast("Could not resign. The game may already be over, or you are offline.");
+            // The server may have moved on (a timeout, or the opponent's move), so show the latest.
+            pollUserGames().catch(() => {});
+        } finally {
+            setLoading(false);
+        }
+    }
+
     const resetSelectedButton = () => {
         setDisplayConfirm(false);
         setSelectedMove(null);
@@ -338,6 +367,9 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 />
                 { resetBoard &&
                     <GeneralButton title='Reset Board' onPress={resetBoard} variant='secondary' fontSize={16} />
+                }
+                { canResign &&
+                    <GeneralButton title='Resign' onPress={confirmResign} variant='secondary' fontSize={16} />
                 }
             </ThemedView>
             { displayConfirm &&
