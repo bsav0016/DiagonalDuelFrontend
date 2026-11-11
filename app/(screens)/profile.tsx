@@ -47,12 +47,14 @@ export default function Profile() {
 
     const [wins, setWins] = useState<number>(0);
     const [losses, setLosses] = useState<number>(0);
+    const [draws, setDraws] = useState<number>(0);
     
     useEffect(() => {
             if (user instanceof User) {
                 const result = user.getWinsAndLosses();
                 setWins(result.wins);
                 setLosses(result.losses);
+                setDraws(result.draws);
             }
     }, [user])
 
@@ -60,7 +62,7 @@ export default function Profile() {
         { title: "Username", value: user?.username },
         { title: "Email", value: user?.email },
         { title: "Online Rating", value: user?.onlineRating },
-        { title: "Online W-L", value: `${wins}-${losses}`},
+        { title: "Online W-L", value: draws > 0 ? `${wins}-${losses} (${draws} ${draws === 1 ? "draw" : "draws"})` : `${wins}-${losses}`},
         { title: "Computer Points", value: user?.computerPoints },
     ]
 

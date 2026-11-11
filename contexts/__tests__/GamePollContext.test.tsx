@@ -1,11 +1,12 @@
 import React from 'react';
 import { act, create } from 'react-test-renderer';
-import { GamePollProvider } from '../GamePollContext';
+import { COMPLETED_PAGE, GamePollProvider, MAX_COMPLETED, useGamePoll } from '../GamePollContext';
 import { User } from '@/features/auth/User';
 
 const POLL_MS = 15000;
 
 const mockGetAllGames = jest.fn();
+const mockUpdateUserGames = jest.fn();
 const mockGetMatchmaking = jest.fn();
 const mockLogout = jest.fn();
 const mockAddToast = jest.fn();
@@ -14,7 +15,7 @@ const mockUserRef = { get current() { return mockUser; } };
 
 jest.mock('@/contexts/UserContext', () => ({
     useUser: () => ({
-        user: mockUser, userRef: mockUserRef, updateUserGames: jest.fn(), updateMatchmaking: jest.fn(),
+        user: mockUser, userRef: mockUserRef, updateUserGames: mockUpdateUserGames, updateMatchmaking: jest.fn(),
     }),
 }));
 jest.mock('../AuthContext', () => ({ useAuth: () => ({ logout: mockLogout }) }));
@@ -41,7 +42,7 @@ describe('GamePollProvider polling', () => {
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
-        mockGetAllGames.mockResolvedValue([]);
+        mockGetAllGames.mockResolvedValue({ games: [], hasMoreCompleted: false, record: null });
         mockGetMatchmaking.mockResolvedValue([]);
         mockUser = null;
         jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -126,5 +127,78 @@ describe('GamePollProvider polling', () => {
 
         expect(mockLogout).not.toHaveBeenCalled();
         expect(mockGetAllGames).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('GamePollProvider finished games', () => {
+    let poll!: ReturnType<typeof useGamePoll>;
+    const Probe = () => { poll = useGamePoll(); return null; };
+
+    async function mountSignedIn() {
+        let tree!: ReturnType<typeof create>;
+        mockUser = ann();
+        await act(async () => { tree = create(<GamePollProvider><Probe /></GamePollProvider>); });
+        return tree;
+    }
+    const lastLimit = () => mockGetAllGames.mock.calls[mockGetAllGames.mock.calls.length - 1][0];
+
+    beforeEach(() => {
+        jest.useFakeTimers();
+        jest.clearAllMocks();
+        mockGetAllGames.mockResolvedValue({ games: [], hasMoreCompleted: false, record: null });
+        mockGetMatchmaking.mockResolvedValue([]);
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+    afterEach(() => jest.useRealTimers());
+
+    it('asks for the first page of finished games', async () => {
+        await mountSignedIn();
+        await act(async () => { await poll.pollUserGames(); });
+        expect(lastLimit()).toBe(COMPLETED_PAGE);
+    });
+
+    it('hands the games, the record and whether there are more to the user', async () => {
+        const record = { wins: 3, losses: 2, draws: 1 };
+        mockGetAllGames.mockResolvedValue({ games: ['g1', 'g2'], hasMoreCompleted: true, record });
+        await mountSignedIn();
+
+        await act(async () => { await poll.pollUserGames(); });
+
+        expect(mockUpdateUserGames).toHaveBeenCalledWith(['g1', 'g2'], { record, hasMoreCompleted: true });
+    });
+
+    it('load more asks for a bigger page straight away and keeps asking for it', async () => {
+        await mountSignedIn();
+
+        await act(async () => { await poll.loadMoreCompleted(); });
+        expect(lastLimit()).toBe(COMPLETED_PAGE * 2);
+
+        await tick(POLL_MS);
+        expect(lastLimit()).toBe(COMPLETED_PAGE * 2);
+
+        await act(async () => { await poll.loadMoreCompleted(); });
+        expect(lastLimit()).toBe(COMPLETED_PAGE * 3);
+    });
+
+    it('never asks for more than the server allows', async () => {
+        await mountSignedIn();
+        for (let i = 0; i < MAX_COMPLETED / COMPLETED_PAGE + 3; i++) {
+            await act(async () => { await poll.loadMoreCompleted(); });
+        }
+        expect(lastLimit()).toBe(MAX_COMPLETED);
+    });
+
+    it('starts again from the first page after signing out and back in', async () => {
+        const tree = await mountSignedIn();
+        await act(async () => { await poll.loadMoreCompleted(); });
+        expect(lastLimit()).toBe(COMPLETED_PAGE * 2);
+
+        mockUser = null;
+        await act(async () => { tree.update(<GamePollProvider><Probe /></GamePollProvider>); });
+        mockUser = ann();
+        await act(async () => { tree.update(<GamePollProvider><Probe /></GamePollProvider>); });
+        await act(async () => { await poll.pollUserGames(); });
+
+        expect(lastLimit()).toBe(COMPLETED_PAGE);
     });
 });

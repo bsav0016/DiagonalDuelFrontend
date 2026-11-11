@@ -1,6 +1,7 @@
 import React, { createContext, ReactNode, useEffect, useRef, useState } from 'react';
 import { Game } from '@/features/game/models/Game';
 import { User } from '@/features/auth/User';
+import { GameRecord } from '@/features/game/models/GameRecord';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserContextType {
@@ -9,7 +10,7 @@ interface UserContextType {
   // For callbacks, effects and timers that need the latest user without re-running: the same user, read directly.
   userRef: React.MutableRefObject<User | null>;
   setUser: (user: User | null) => void;
-  updateUserGames: (games: Game[]) => void;
+  updateUserGames: (games: Game[], extras?: { record: GameRecord | null; hasMoreCompleted: boolean }) => void;
   updateMatchmaking: (matchmaking: number[]) => void;
   updateUserComputerScore: (computerLevel: number) => void;
 }
@@ -40,7 +41,9 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           plainUser.games,
           plainUser.matchmaking,
           plainUser.computerPoints,
-          plainUser.onlineRating
+          plainUser.onlineRating,
+          plainUser.record ?? null,
+          plainUser.hasMoreCompleted === true
         );
         setUser(currentUser);
       }
@@ -49,43 +52,19 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setStoredUser();
   }, []);
 
-  const updateUserGames = (games: Game[]) => {
+  const updateUserGames = (games: Game[], extras?: { record: GameRecord | null; hasMoreCompleted: boolean }) => {
     if (!userRef.current) return;
-    const updatedUser = new User(
-      userRef.current.username, 
-      userRef.current.email, 
-      games, 
-      userRef.current.matchmaking,
-      userRef.current.computerPoints,
-      userRef.current.onlineRating
-    );
-    setUser(updatedUser);
+    setUser(userRef.current.with({ games, ...extras }));
   };
 
   const updateMatchmaking = (matchmaking: number[]) => {
     if (!userRef.current) return;
-    const updatedUser = new User(
-      userRef.current.username, 
-      userRef.current.email, 
-      userRef.current.games, 
-      matchmaking,
-      userRef.current.computerPoints,
-      userRef.current.onlineRating
-    );
-    setUser(updatedUser);
+    setUser(userRef.current.with({ matchmaking }));
   };
 
   const updateUserComputerScore = (computerLevel: number) => {
     if (!userRef.current) return;
-    const updatedUser = new User(
-      userRef.current.username, 
-      userRef.current.email, 
-      userRef.current.games, 
-      userRef.current.matchmaking,
-      userRef.current.computerPoints + computerLevel,
-      userRef.current.onlineRating
-    );
-    setUser(updatedUser);
+    setUser(userRef.current.with({ computerPoints: userRef.current.computerPoints + computerLevel }));
   }
 
   return (

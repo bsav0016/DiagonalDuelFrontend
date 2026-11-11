@@ -80,3 +80,66 @@ describe('UserProvider', () => {
         expect(api().user).toBeNull();
     });
 });
+
+describe('UserProvider game record', () => {
+    beforeEach(async () => { await AsyncStorage.clear(); });
+    const record = { wins: 5, losses: 3, draws: 1 };
+
+    it('stores the record and whether there are more finished games along with the games', async () => {
+        const { api } = await mount();
+        await act(async () => { await api().setUser(ann()); });
+
+        await act(async () => { api().updateUserGames([], { record, hasMoreCompleted: true }); });
+
+        expect(api().user?.record).toEqual(record);
+        expect(api().user?.hasMoreCompleted).toBe(true);
+    });
+
+    it('keeps them when only the games are updated, and through the other updates', async () => {
+        const { api } = await mount();
+        await act(async () => { await api().setUser(ann()); });
+        await act(async () => { api().updateUserGames([], { record, hasMoreCompleted: true }); });
+
+        await act(async () => { api().updateUserGames([]); });
+        await act(async () => { api().updateMatchmaking([1]); });
+        await act(async () => { api().updateUserComputerScore(4); });
+
+        expect(api().user?.record).toEqual(record);
+        expect(api().user?.hasMoreCompleted).toBe(true);
+        expect(api().user?.matchmaking).toEqual([1]);
+    });
+
+    it('lets a poll clear the record when the server did not send one', async () => {
+        const { api } = await mount();
+        await act(async () => { await api().setUser(ann()); });
+        await act(async () => { api().updateUserGames([], { record, hasMoreCompleted: true }); });
+
+        await act(async () => { api().updateUserGames([], { record: null, hasMoreCompleted: false }); });
+
+        expect(api().user?.record).toBeNull();
+        expect(api().user?.hasMoreCompleted).toBe(false);
+    });
+
+    it('is still there after the app is reopened', async () => {
+        const first = await mount();
+        await act(async () => { await first.api().setUser(ann()); });
+        await act(async () => { first.api().updateUserGames([], { record, hasMoreCompleted: true }); });
+
+        const second = await mount();
+
+        expect(second.api().user?.record).toEqual(record);
+        expect(second.api().user?.hasMoreCompleted).toBe(true);
+    });
+
+    it('opens a user saved by an older version of the app, with no record', async () => {
+        await AsyncStorage.setItem('user', JSON.stringify({
+            username: 'ann', email: 'a@b.c', games: [], matchmaking: [], computerPoints: 1, onlineRating: 1000,
+        }));
+
+        const { api } = await mount();
+
+        expect(api().user?.username).toBe('ann');
+        expect(api().user?.record).toBeNull();
+        expect(api().user?.hasMoreCompleted).toBe(false);
+    });
+});

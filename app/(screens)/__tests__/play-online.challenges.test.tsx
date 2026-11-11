@@ -15,7 +15,8 @@ const mockGetChallenges = jest.fn();
 const mockAccept = jest.fn();
 const mockDecline = jest.fn();
 const mockCancel = jest.fn();
-const mockUser = new User('ann', 'a@b.c', []);
+let mockUser = new User('ann', 'a@b.c', []);
+const mockLoadMore = jest.fn();
 const mockShareInvite = jest.fn();
 
 jest.mock('expo-router', () => {
@@ -31,7 +32,7 @@ jest.mock('@/contexts/UserContext', () => ({ useUser: () => ({ user: mockUser })
 jest.mock('@/contexts/LoadingContext', () => ({ useLoading: () => ({ setLoading: mockSetLoading }) }));
 jest.mock('@/contexts/GamePollContext', () => ({
     useGamePoll: () => ({
-        pollUserGames: mockPoll, createMatchmaking: jest.fn(), cancelMatchmaking: jest.fn(), enablePushNotifications: jest.fn(),
+        pollUserGames: mockPoll, loadMoreCompleted: mockLoadMore, createMatchmaking: jest.fn(), cancelMatchmaking: jest.fn(), enablePushNotifications: jest.fn(),
     }),
 }));
 jest.mock('@/hooks/useGameService', () => ({
@@ -74,6 +75,8 @@ describe('Play Online challenges', () => {
         jest.clearAllMocks();
         mockGetChallenges.mockResolvedValue({ incoming: [challenge()], outgoing: [challenge({ id: 2, challenger: 'ann', recipient: 'carol' })] });
         mockPoll.mockResolvedValue(undefined);
+        mockLoadMore.mockResolvedValue(undefined);
+        mockUser = new User('ann', 'a@b.c', []);
         mockAccept.mockResolvedValue(newGame());
         mockDecline.mockResolvedValue(undefined);
         mockCancel.mockResolvedValue(undefined);
@@ -165,5 +168,33 @@ describe('Play Online challenges', () => {
         await act(async () => { await tree.root.findByProps({ testID: 'share-4' }).props.onPress(); });
 
         expect(mockAddToast).toHaveBeenCalledWith('Could not open the share sheet');
+    });
+});
+
+describe('Play Online finished games', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockGetChallenges.mockResolvedValue({ incoming: [], outgoing: [] });
+        mockLoadMore.mockResolvedValue(undefined);
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    it('offers Load More only when the server says older finished games exist', async () => {
+        mockUser = new User('ann', 'a@b.c', [], [], 0, 1000, null, false);
+        expect((await render()).button('Load More')).toHaveLength(0);
+
+        mockUser = new User('ann', 'a@b.c', [], [], 0, 1000, null, true);
+        expect((await render()).button('Load More')).toHaveLength(1);
+    });
+
+    it('Load More asks for the next page and clears the loading state', async () => {
+        mockUser = new User('ann', 'a@b.c', [], [], 0, 1000, null, true);
+        const { button } = await render();
+
+        await act(async () => { await button('Load More')[0].props.onPress(); });
+
+        expect(mockLoadMore).toHaveBeenCalledTimes(1);
+        expect(mockSetLoading).toHaveBeenNthCalledWith(1, true);
+        expect(mockSetLoading).toHaveBeenLastCalledWith(false);
     });
 });
