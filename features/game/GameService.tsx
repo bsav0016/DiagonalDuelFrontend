@@ -97,6 +97,15 @@ export const GameService = {
         }
     },
 
+    // Gives up an online game: the server ends it at once in the opponent's favour.
+    async resign(id: number, token: string): Promise<void> {
+        await networkRequest(
+            `${URL_EXT.GAMES}${id}/${URL_EXT.RESIGN}`,
+            RequestMethod.POST,
+            { ...HEADERS(token).AUTH }
+        );
+    },
+
     async getMatchmaking(token: string): Promise<number[]> {
         try {
             const headers = {

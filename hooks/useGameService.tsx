@@ -64,6 +64,11 @@ export function useGameService() {
         return await GameService.makeMove(id, row, col, token);
     };
 
+    const resign = async (id: number) => {
+        const token = await getToken();
+        return await GameService.resign(id, token);
+    };
+
     const getMatchmaking = async () => {
         const token = await getToken();
         return await GameService.getMatchmaking(token);
@@ -101,6 +106,7 @@ export function useGameService() {
         enablePushNotifications,
         getAllGames,
         makeMove,
+        resign,
         getMatchmaking,
         startMatchmaking,
         stopMatchmaking,

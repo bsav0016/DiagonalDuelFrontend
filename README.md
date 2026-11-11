@@ -18,7 +18,7 @@ Most board games need two people in the same room at the same time. Diagonal Due
 
 - **Play Computer** – choose a level from 0 to 100. Beating the computer earns leaderboard points equal to the level.
 - **2 Player Game** – pass-and-play on one device.
-- **Play Online** – matchmaking against another registered player. Games are asynchronous: each move has a time limit (default one day), and the home list shows games where it is your turn, their turn, and completed. Online games change both players' Elo rating, and push notifications tell you when it is your turn, a match is found, a game ends, or your time is running out.
+- **Play Online** – matchmaking against another registered player. Games are asynchronous: each move has a time limit (default one day), and the home list shows games where it is your turn, their turn, and completed. You can give up a game with the **Resign** button (after a confirmation); the opponent wins at once. Online games change both players' Elo rating, and push notifications tell you when it is your turn, a match is found, a game ends, or your time is running out.
 - **Leaderboard** – top players by online rating and by computer points.
 - **How to Play, accounts (including in-app account deletion) and a support screen.**
 
