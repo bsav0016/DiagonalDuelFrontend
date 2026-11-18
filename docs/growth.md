@@ -33,10 +33,9 @@ leads nowhere, so switch it on and open the home page before releasing an app ve
 | Home page | `web-home` |
 | Invite page | `invite-page` |
 
-The App Store reports first-time downloads per campaign in App Analytics, Campaigns. It only reports a campaign link that
-also carries the account's provider token (`pt`): build one campaign link in App Store Connect, and add `pt=<number>&` before
-`ct=` in the two App Store links in `site/index.html` and `site/join.html`. It is public and the same for every app on the
-account. Until then the links work but the campaign is not reported.
+The App Store reports first-time downloads per campaign in App Analytics, Campaigns. Both App Store links carry the account's
+provider token (`pt=122126127`, set 2026-11-18; it is public and the same for every app on the account), which the App Store
+needs before it will report a campaign.
 
 Android: there is no Play listing, so the pages offer iPhone and iPad only. When there is one, add a Google Play button
 with an install referrer (`&referrer=utm_source%3Dinvite-page%26utm_medium%3Dorganic%26utm_campaign%3Dinvite-page`).
