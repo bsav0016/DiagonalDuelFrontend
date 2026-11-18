@@ -19,11 +19,15 @@ const STEPS = [
     },
     {
         title: "Not sure where you can play?",
-        body: "Tap Show Valid Moves during a game and every legal square lights up purple.",
+        body: "Tap Show Valid Moves during a game and every legal square shows a small light dot.",
     },
     {
         title: "Get four in a row",
         body: "Four of your pieces in a straight line wins, whether across, down or diagonally. If the board fills up with no winner, the game is a draw.",
+    },
+    {
+        title: "Try the daily puzzle",
+        body: "Every day there is a new position where one move wins by force. Find the win, keep your streak going and share your result.",
     },
 ];
 
