@@ -35,6 +35,7 @@ export default function PagesLayout() {
                       <Stack.Screen name={Routes.Leaderboard} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.Profile} options={{ headerShown: false }} />
                       <Stack.Screen name={Routes.HowToPlay} options={{ headerShown: false }} />
+                      <Stack.Screen name={Routes.DailyPuzzle} options={{ headerShown: false }} />
                     </Stack>
                   </SafeAreaView>
                 </ThemedView>

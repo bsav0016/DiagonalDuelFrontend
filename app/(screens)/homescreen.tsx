@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { StyleSheet, View } from "react-native";
 import { useRouteTo } from "@/contexts/RouteContext";
 import { Routes } from "@/app/(screens)/Routes";
@@ -7,6 +8,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { GeneralButton } from "@/components/GeneralButton";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { Colors } from "@/constants/Colors";
+import { dayNumber } from "@/features/puzzles/puzzleBank";
+import { currentStreak, loadProgress } from "@/features/puzzles/progress";
 
 
 function Logo() {
@@ -25,8 +28,21 @@ function Logo() {
 export default function HomeScreen() {
   const { routeTo } = useRouteTo();
   const muted = useThemeColor({}, 'muted');
+  const [streak, setStreak] = useState(0);
+
+  // The streak is read each time this screen comes back into view, so a puzzle solved a moment ago shows at once.
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      loadProgress().then((progress) => {
+        if (alive) setStreak(currentStreak(progress, dayNumber(new Date())));
+      });
+      return () => { alive = false; };
+    }, [])
+  );
 
   const homeButtons = [
+    { title: streak > 0 ? `Daily Puzzle \u{1F525} ${streak}` : "Daily Puzzle", route: Routes.DailyPuzzle, variant: 'primary' as const },
     { title: "Play Computer", route: Routes.PlayComputer, variant: 'primary' as const },
     { title: "Play Online", route: Routes.PlayOnline, variant: 'primary' as const },
     { title: "How to Play", route: Routes.HowToPlay, variant: 'secondary' as const },
