@@ -9,14 +9,19 @@ Copy these into App Store Connect and the Google Play Console. Only claims what 
 | Apple name (30) | Diagonal Duel: 4 in a Row |
 | Apple subtitle (30) | Strategy board game for two |
 | Google title (30) | Diagonal Duel: Four in a Row |
-| Google short description (80) | Four-in-a-row strategy on a diamond board. Play the computer or a friend. |
-| Apple promotional text (170) | Line up four on an 8x8 diamond board. Play the computer at any level from 0 to 100, pass the phone to a friend, or take on other players online. |
+| Google short description (80) | A new four-in-a-row puzzle every day, plus games vs the computer or a friend. |
+| Apple promotional text (170) | Solve a new four-in-a-row puzzle every day, play the computer at any level from 0 to 100, or challenge friends online. Free. |
 | Apple keywords (100) | strategy,board game,puzzle,two player,2 player,offline,abstract,logic,vs computer,brain,classic,duel |
 | Category | Games, then Board (Apple primary; Strategy secondary) and Google "Board" |
 
 ## Full description (use for both stores)
 
-Diagonal Duel is a quick strategy game for two: take turns placing pieces on an 8x8 board, and be the first to line up four in a row, across, down or diagonally.
+Diagonal Duel is a quick strategy game: take turns placing pieces on an 8x8 board, and be the first to line up four in a row, across, down or diagonally. Play a friend, the computer, or solve a new puzzle every day.
+
+A NEW PUZZLE EVERY DAY
+- Every day there is a new position where one move wins by force. Find the winning moves in as few tries as you can.
+- Puzzles get harder through the week: a win in one move early on, in three moves at the weekend.
+- Keep your streak going and share your result with friends. No account needed, and it works offline.
 
 A DIFFERENT KIND OF FOUR IN A ROW
 - The board is a diamond, and you build outward from the corner. A piece can only go next to the pieces already in play, so every move opens some lines and closes others.
@@ -39,7 +44,7 @@ YOUR DATA
 
 Upload the images in this folder. They are real screens from the running app with a short headline each.
 
-- App Store: `ios/` (1290 x 2796, accepted for the 6.9-inch and 6.7-inch iPhone slots). Order: 1 to 5.
+- App Store: `ios/` (1290 x 2796, accepted for the 6.9-inch and 6.7-inch iPhone slots). Order: 1 to 7. The first two show the daily puzzle, since the first screenshots decide whether a visitor installs.
 - Google Play: `android/` (1080 x 1920). Same order.
 
 To remake them after the app changes: capture new screens into `raw/`, then run `node scripts/make-store-art.js <path to a Chromium>` (needs `playwright-core`).

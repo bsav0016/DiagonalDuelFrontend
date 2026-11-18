@@ -11,11 +11,13 @@ const { chromium } = require('playwright-core');
 const raw = path.join(__dirname, '..', 'docs', 'store', 'raw');
 const SHOTS = [
   // showTo: the capture row (of 2400) where the useful part of the screen ends; the empty space below is left out.
-  { file: 'threat.png', name: '1-block-the-line', title: 'Block it before they win', showTo: 1990 },
-  { file: 'win.png', name: '2-four-in-a-row', title: 'Line up four to win', showTo: 1990 },
-  { file: 'level.png', name: '3-play-the-computer', title: 'Play the computer, level 0 to 100', showTo: 1700 },
-  { file: 'how-to-play.png', name: '4-learn-in-a-minute', title: 'Easy to learn in a minute', showTo: 2150 },
-  { file: 'home.png', name: '5-ways-to-play', title: 'Computer, friends or online', showTo: 2200 },
+  { file: 'puzzle.png', name: '1-daily-puzzle', title: 'A new puzzle every day', showTo: 1750 },
+  { file: 'threat.png', name: '2-block-the-line', title: 'Block it before they win', showTo: 1990 },
+  { file: 'puzzle-solved.png', name: '3-keep-your-streak', title: 'Keep your streak going', showTo: 1950 },
+  { file: 'win.png', name: '4-four-in-a-row', title: 'Line up four to win', showTo: 1990 },
+  { file: 'level.png', name: '5-play-the-computer', title: 'Play the computer, level 0 to 100', showTo: 1700 },
+  { file: 'how-to-play.png', name: '6-learn-in-a-minute', title: 'Easy to learn in a minute', showTo: 2290 },
+  { file: 'home.png', name: '7-ways-to-play', title: 'Puzzle, computer, friends or online', showTo: 2200 },
 ];
 // 1080x2400 captures: drop the status bar at the top and the gesture bar at the bottom.
 const CROP_TOP = 118;
