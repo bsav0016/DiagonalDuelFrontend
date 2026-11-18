@@ -9,6 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
+    "puzzles:build": "node scripts/puzzles/build-bank.js",
+    "puzzles:check": "node scripts/puzzles/build-bank.js --check",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
