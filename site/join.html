@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join a Diagonal Duel game</title>
+<meta name="description" content="A friend invited you to a game of Diagonal Duel, a four-in-a-row strategy game on a diamond board.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<nav><a href="index.html">Diagonal Duel</a></nav>
+<article>
+<h1>You've been invited to a game</h1>
+
+<div id="with-code" hidden>
+<p>A friend wants to play Diagonal Duel with you. Your invite code:</p>
+<p class="code" id="code" aria-label="Invite code"></p>
+<p><a class="button" id="open-app" href="diagonalduel://join-challenge">Open in Diagonal Duel</a></p>
+<h2>Don't have the app yet?</h2>
+<p>It's free. Install it, create an account, then come back to this page and tap the button above, or enter the code in the app under <strong>Play Online &gt; Join with a Code</strong>.</p>
+</div>
+
+<div id="without-code">
+<p>This link has no invite code. Open the link your friend sent you again, or enter the code in the app under <strong>Play Online &gt; Join with a Code</strong>.</p>
+<h2>Don't have the app yet?</h2>
+<p>It's free. Install it and create an account to play.</p>
+</div>
+
+<p><a class="button secondary" href="https://apps.apple.com/us/app/diagonal-duel/id1532290974?ct=invite-page&amp;mt=8">Get it on the App Store</a></p>
+<p class="muted">Diagonal Duel is available on iPhone and iPad.</p>
+</article>
+<footer>Diagonal Duel by Savidge Apps.</footer>
+</main>
+<script src="join.js"></script>
+</body>
+</html>
