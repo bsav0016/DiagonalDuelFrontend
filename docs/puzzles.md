@@ -24,3 +24,13 @@ A puzzle is only accepted when:
 - `npm run puzzles:check` verifies every puzzle in the bank from scratch.
 - `npm run puzzles:build` rewrites the bank. It is deterministic, so the file only changes if the seed, the pattern, the length (`WEEKS` in `build-bank.js`) or the rules change. Any such change gives a different bank from day 0, so do it before the app is released: once people have a streak, the puzzle for a given day must not change. To lengthen a released bank, append a second file instead of regenerating.
 - `npm test` runs all of the above, including the whole-bank check.
+
+## In the app
+
+The Daily Puzzle button is first on the home screen (with the current streak). The screen (`app/(screens)/daily-puzzle.tsx`) shows today's puzzle, who is to move and in how many moves the win comes. The player taps a square and confirms; a move that does not keep the forced win costs a try and the board stays, a right move is played and the defender answers with its best defence (taking one of the winning squares when every reply loses anyway), and the puzzle ends on the winning move. A hint shows the winning move and counts as a try.
+
+- Today's puzzle comes from the day number (`features/puzzles/puzzleBank.ts`), counted in local calendar days so it changes at local midnight.
+- The streak and results are kept on the phone (`progress.ts`). Only the first solve of a day counts, so replaying changes nothing; a missed day resets the streak.
+- Sharing sends the puzzle number, the tries and the streak with the App Store link (`share.ts`). The Play Store link is empty until the Android listing exists, so Android phones are sent the App Store page.
+
+![The daily puzzle](screenshots/daily-puzzle.png) ![Solved](screenshots/daily-puzzle-solved.png) ![Home](screenshots/home-daily-puzzle.png)

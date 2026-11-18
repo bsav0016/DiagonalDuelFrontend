@@ -10,5 +10,6 @@ export enum Routes {
     ForgotPassword = 'forgot-password',
     Leaderboard = 'leaderboard',
     Profile = 'profile',
-    HowToPlay = 'how-to-play'
+    HowToPlay = 'how-to-play',
+    DailyPuzzle = 'daily-puzzle'
 }
