@@ -38,5 +38,7 @@ export const URL_EXT = {
     TOKEN: 'token/',
     TOKEN_REFRESH: 'token/refresh/',
     LEADERBOARD: 'leaderboard/',
-    UPDATE_COMPUTER_SCORE: 'update_computer_score/'
+    UPDATE_COMPUTER_SCORE: 'update_computer_score/',
+    COMPUTER_GAMES: 'computer-games/',
+    FINISH: 'finish/'
 }
