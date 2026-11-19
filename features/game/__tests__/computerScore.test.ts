@@ -2,7 +2,7 @@ import { ComputerGameTracker, humanMovedFirst, movesForServer, type Cell, type F
 import { NetworkError } from '@/lib/networkRequests/NetworkError';
 
 const MOVES: Cell[] = [[0, 0], [1, 0], [0, 1], [1, 1], [0, 2], [1, 2], [0, 3]];
-const credited = (over: Partial<FinishResult> = {}): FinishResult => ({ pointsAwarded: 10, total: 110, alreadyFinished: false, ...over });
+const credited = (over: Partial<FinishResult> = {}): FinishResult => ({ pointsAwarded: 10, total: 110, alreadyFinished: false, capped: false, ...over });
 
 function setup(over: Partial<TrackerDeps> = {}) {
     const waits: number[] = [];
@@ -24,8 +24,14 @@ describe('registering a game and sending the win', () => {
 
         expect(deps.startGame).toHaveBeenCalledWith(10, false);
         expect(deps.finishGame).toHaveBeenCalledWith(5, MOVES);
-        expect(outcome).toEqual({ kind: 'credited', points: 10, total: 110 });
+        expect(outcome).toEqual({ kind: 'credited', points: 10, total: 110, capped: false });
         expect(deps.legacyScore).not.toHaveBeenCalled();
+    });
+
+    it('passes on whether the daily point limit held some of the win back', async () => {
+        const { tracker } = setup({ finishGame: jest.fn().mockResolvedValue(credited({ pointsAwarded: 3, capped: true })) });
+        tracker.begin(10, true);
+        expect(await tracker.recordWin(10, MOVES)).toEqual({ kind: 'credited', points: 3, total: 110, capped: true });
     });
 
     it('waits for the start to finish before it sends the win, even when the start is slow', async () => {

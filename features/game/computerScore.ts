@@ -12,6 +12,8 @@ export interface FinishResult {
     total: number | null;
     /** True when this game had already been credited (a retry whose first answer was lost). */
     alreadyFinished: boolean;
+    /** True when the win was worth more than the player's daily point limit had room for. */
+    capped: boolean;
 }
 
 export interface TrackerDeps {
@@ -26,7 +28,7 @@ export interface TrackerDeps {
 
 export type WinOutcome =
     /** The server checked the game and credited it. */
-    | { kind: 'credited'; points: number; total: number | null }
+    | { kind: 'credited'; points: number; total: number | null; capped: boolean }
     /** The server has no computer-game endpoints yet, so the old endpoint was used. */
     | { kind: 'legacy' }
     /** The server looked at the game and said no (it cannot be verified). Asking again will not help. */
@@ -98,7 +100,7 @@ export class ComputerGameTracker {
                 try {
                     const result = await this.deps.finishGame(started.id, moves);
                     this.started = null;
-                    return { kind: 'credited', points: result.pointsAwarded, total: result.total };
+                    return { kind: 'credited', points: result.pointsAwarded, total: result.total, capped: result.capped };
                 } catch (error) {
                     if (isFinalRefusal(error)) return { kind: 'refused' };
                     if (attempt === 0) await this.wait(RETRY_DELAY_MS);

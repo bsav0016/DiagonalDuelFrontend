@@ -49,12 +49,17 @@ describe('GameService.finishComputerGame', () => {
         expect(method).toBe(RequestMethod.POST);
         expect(headers.Authorization).toBe('Bearer access');
         expect(JSON.parse(body)).toEqual({ moves: [[0, 0], [1, 0]] });
-        expect(result).toEqual({ pointsAwarded: 40, total: 140, alreadyFinished: false });
+        expect(result).toEqual({ pointsAwarded: 40, total: 140, alreadyFinished: false, capped: false });
+    });
+
+    it('reads whether the daily point limit held some of the win back', async () => {
+        mockedRequest.mockResolvedValue({ data: { points_awarded: 0, computer_points: 100, already_finished: false, capped: true }, status: 200 });
+        expect(await GameService.finishComputerGame('access', 1, [])).toMatchObject({ pointsAwarded: 0, capped: true });
     });
 
     it('reads a repeat answer, and a missing total, safely', async () => {
         mockedRequest.mockResolvedValue({ data: { points_awarded: 5, already_finished: true }, status: 200 });
-        expect(await GameService.finishComputerGame('access', 1, [])).toEqual({ pointsAwarded: 5, total: null, alreadyFinished: true });
+        expect(await GameService.finishComputerGame('access', 1, [])).toEqual({ pointsAwarded: 5, total: null, alreadyFinished: true, capped: false });
     });
 
     it('does not send the level or points, only the moves: the server decides what a win is worth', async () => {

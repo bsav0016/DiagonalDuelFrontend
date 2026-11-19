@@ -75,7 +75,7 @@ describe('Game screen: a win against the computer', () => {
         jest.clearAllMocks();
         mockUser = { username: 'ann', computerPoints: 100, with: (changes: object) => ({ ...mockUser, ...changes }) as any };
         mockStart.mockResolvedValue(31);
-        mockFinish.mockResolvedValue({ pointsAwarded: 40, total: 140, alreadyFinished: false });
+        mockFinish.mockResolvedValue({ pointsAwarded: 40, total: 140, alreadyFinished: false, capped: false });
         mockLegacy.mockResolvedValue(undefined);
         jest.spyOn(console, 'error').mockImplementation(() => {});
     });
@@ -153,7 +153,7 @@ describe('Game screen: a win against the computer', () => {
         expect(actions[0].label).toBe('Try again');
         expect(mockSetUser).not.toHaveBeenCalled();
 
-        mockFinish.mockResolvedValue({ pointsAwarded: 40, total: 140, alreadyFinished: true });
+        mockFinish.mockResolvedValue({ pointsAwarded: 40, total: 140, alreadyFinished: true, capped: false });
         await act(async () => { await actions[0].callback(); });
         expect(mockSetUser).toHaveBeenCalledWith(expect.objectContaining({ computerPoints: 140 }));
         tree.unmount();
@@ -177,6 +177,23 @@ describe('Game screen: a win against the computer', () => {
         expect(mockLegacy).toHaveBeenCalledWith(40);
         expect(mockUpdateLocalScore).toHaveBeenCalledWith(40);
         expect(mockFinish).not.toHaveBeenCalled();
+    });
+
+    it("explains the daily point limit when a win is only partly credited", async () => {
+        mockFinish.mockResolvedValue({ pointsAwarded: 10, total: 110, alreadyFinished: false, capped: true });
+        mockGameParam = computerGame({ level: 40, humanFirst: true, moves: WIN_MOVES });
+        await render();
+
+        expect(mockSetUser).toHaveBeenCalledWith(expect.objectContaining({ computerPoints: 110 }));
+        expect(mockAddToast).toHaveBeenCalledWith("Win verified: +10 points. That is today's point limit, so more wins count again tomorrow.");
+    });
+
+    it("explains the daily point limit when a win earns nothing because the limit was already reached", async () => {
+        mockFinish.mockResolvedValue({ pointsAwarded: 0, total: 100, alreadyFinished: false, capped: true });
+        mockGameParam = computerGame({ level: 40, humanFirst: true, moves: WIN_MOVES });
+        await render();
+
+        expect(mockAddToast).toHaveBeenCalledWith("Win verified, but you've reached today's point limit, so no points were added. Wins count again tomorrow.");
     });
 
     it('registers a new game when the board is reset, with whoever moves first this time', async () => {

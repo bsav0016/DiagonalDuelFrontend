@@ -23,6 +23,14 @@ import { PlayerChips } from "@/features/game/components/PlayerChips";
 import { ComputerGameTracker, humanMovedFirst, movesForServer } from "@/features/game/computerScore";
 
 
+/** What to tell the player about a verified win: the points, and whether the daily point limit held some back. */
+function winMessage(points: number, capped: boolean): string {
+    if (!capped) return points > 0 ? `Win verified: +${points} points` : 'Win verified';
+    return points > 0
+        ? `Win verified: +${points} points. That is today's point limit, so more wins count again tomorrow.`
+        : "Win verified, but you've reached today's point limit, so no points were added. Wins count again tomorrow.";
+}
+
 export default function GameScreen () {
     const { routeTo } = useRouteTo();
     const { addToast } = useToast();
@@ -100,7 +108,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 if (current) {
                     setUser(current.with({ computerPoints: outcome.total ?? current.computerPoints + outcome.points }));
                 }
-                addToast(outcome.points > 0 ? `Win verified: +${outcome.points} points` : 'Win verified');
+                addToast(winMessage(outcome.points, outcome.capped));
                 break;
             }
             case 'legacy':
