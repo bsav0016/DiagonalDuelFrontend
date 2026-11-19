@@ -6,7 +6,7 @@ import { useRouteTo } from "@/contexts/RouteContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useUser } from "@/contexts/UserContext";
 import { ComputerPointsLeader } from "@/features/leaderboard/models/ComputerPointsLeader";
-import { LeaderboardService } from "@/features/leaderboard/LeaderboardService";
+import { useGameService } from "@/hooks/useGameService";
 import { OnlineRatingLeader } from "@/features/leaderboard/models/OnlineRatingLeader";
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
@@ -16,11 +16,16 @@ export default function Leaderboard() {
     const { addToast } = useToast();
     const { routeBack } = useRouteTo();
     const { user } = useUser()
+    const { getLeaderboards } = useGameService();
 
     const [computerLeaderboard, setComputerLeaderboard] = useState<ComputerPointsLeader[]>([]);
     const [ratingLeaderboard, setRatingLeaderboard] = useState<OnlineRatingLeader[]>([]);
     const [selectedTab, setSelectedTab] = useState<"computer" | "rating">("computer");
 
+    // The player's own rows. The server says where they stand even outside the listed top players; without that
+    // (signed out, or an older server) they are found in the list.
+    const [serverComputerLeader, setServerComputerLeader] = useState<ComputerPointsLeader | null>(null);
+    const [serverRatingLeader, setServerRatingLeader] = useState<OnlineRatingLeader | null>(null);
     const [userComputerLeader, setUserComputerLeader] = useState<ComputerPointsLeader | null>(null);
     const [userRatingLeader, setUserRatingLeader] = useState<OnlineRatingLeader | null>(null);
 
@@ -28,9 +33,11 @@ export default function Leaderboard() {
         const populateLeaderboards = async () => {
             setLoading(true);
             try {
-                const { computerPointsLeaderboard, onlineRatingLeaderboard } = await LeaderboardService.getLeaderboards();
+                const { computerPointsLeaderboard, onlineRatingLeaderboard, computerPointsMe, onlineRatingMe } = await getLeaderboards();
                 setComputerLeaderboard(computerPointsLeaderboard);
                 setRatingLeaderboard(onlineRatingLeaderboard);
+                setServerComputerLeader(computerPointsMe);
+                setServerRatingLeader(onlineRatingMe);
             } catch (error) {
                 console.error(error);
                 addToast("Could not get leaderboard");
@@ -44,22 +51,12 @@ export default function Leaderboard() {
     }, []);
 
     useEffect(() => {
-        setUserComputerLeader(null);
-        for (const leader of computerLeaderboard) {
-            if (leader.username === user?.username) {
-                setUserComputerLeader(leader);
-            }
-        }
-    }, [computerLeaderboard, user]);
+        setUserComputerLeader(serverComputerLeader ?? computerLeaderboard.find((leader) => leader.username === user?.username) ?? null);
+    }, [computerLeaderboard, serverComputerLeader, user]);
 
     useEffect(() => {
-        setUserRatingLeader(null);
-        for (const leader of ratingLeaderboard) {
-            if (leader.username === user?.username) {
-                setUserRatingLeader(leader);
-            }
-        }
-    }, [ratingLeaderboard, user]);
+        setUserRatingLeader(serverRatingLeader ?? ratingLeaderboard.find((leader) => leader.username === user?.username) ?? null);
+    }, [ratingLeaderboard, serverRatingLeader, user]);
 
     const renderLeaderboardItem = (item: ComputerPointsLeader | OnlineRatingLeader) => (
         <ThemedView style={[styles.leaderboardItem, item.username === user?.username && { backgroundColor: 'orange' }]}>

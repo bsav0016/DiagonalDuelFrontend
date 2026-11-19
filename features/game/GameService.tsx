@@ -222,6 +222,7 @@ export const GameService = {
             pointsAwarded: data.points_awarded,
             total: typeof data.computer_points === 'number' ? data.computer_points : null,
             alreadyFinished: data.already_finished === true,
+            capped: data.capped === true,
         };
     },
 
