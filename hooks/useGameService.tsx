@@ -4,6 +4,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { formatTime } from "@/lib/TimeFormatUtil";
 import { registerForPush } from "@/features/notifications/pushRegistration";
 import { ChallengeService } from "../features/challenges/ChallengeService";
+import type { Cell } from "../features/game/computerScore";
 
 export function useGameService() {
     const { tokenRef, refreshTokenRef, userTokenWarnedRef, setToken, setUserTokenWarned, logout } = useAuth();
@@ -90,6 +91,16 @@ export function useGameService() {
         return await GameService.updateComputerScore(token, computerLevel);
     }
 
+    const startComputerGame = async (level: number, humanFirst: boolean) => {
+        const token = await getToken();
+        return await GameService.startComputerGame(token, level, humanFirst);
+    };
+
+    const finishComputerGame = async (gameId: number, moves: Cell[]) => {
+        const token = await getToken();
+        return await GameService.finishComputerGame(token, gameId, moves);
+    };
+
     const getChallenges = async () => {
         const token = await getToken();
         return await ChallengeService.list(token);
@@ -165,6 +176,8 @@ export function useGameService() {
         getMatchmaking,
         startMatchmaking,
         stopMatchmaking,
-        updateComputerScore
+        updateComputerScore,
+        startComputerGame,
+        finishComputerGame
     };
 }

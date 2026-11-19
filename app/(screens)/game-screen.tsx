@@ -20,6 +20,7 @@ import { useGameService } from "@/hooks/useGameService";
 import { GameAI } from "@/features/game/models/GameAI";
 import { ConfirmView } from "@/features/game/components/ConfirmView";
 import { PlayerChips } from "@/features/game/components/PlayerChips";
+import { ComputerGameTracker, humanMovedFirst, movesForServer } from "@/features/game/computerScore";
 
 
 export default function GameScreen () {
@@ -47,9 +48,9 @@ export default function GameScreen () {
 function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const { routeBack, routeReplace } = useRouteTo();
     const { addToast } = useToast();
-    const { user, userRef, updateUserComputerScore } = useUser();
+    const { user, userRef, setUser, updateUserComputerScore } = useUser();
     const { setLoading } = useLoading();
-    const { makeMove, resign, requestRematch, updateComputerScore } = useGameService();
+    const { makeMove, resign, requestRematch, updateComputerScore, startComputerGame, finishComputerGame } = useGameService();
     const { pollUserGames } = useGamePoll();
 
     const [gameInstance, setGameInstance] = useState<Game>(Game.fromParams(parsedGame));
@@ -70,6 +71,54 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const [isComputerProcessing, setIsComputerProcessing] = useState(false);
     const [gameAI, setGameAI] = useState<GameAI | null>(null);
     const [computerTurn, setComputerTurn] = useState(false);
+
+    // A win against the computer only earns points once the server has checked the game, so a signed-in player's
+    // computer game is registered with the server when it starts and the moves are sent when it is won.
+    const [tracker] = useState(() => new ComputerGameTracker({
+        startGame: startComputerGame, finishGame: finishComputerGame, legacyScore: updateComputerScore,
+    }));
+    useEffect(() => {
+        tracker.setDeps({ startGame: startComputerGame, finishGame: finishComputerGame, legacyScore: updateComputerScore });
+    });
+    // Counts the games played on this screen (the Reset Board button starts another), so each is registered once.
+    const [gameRound, setGameRound] = useState(0);
+    useEffect(() => {
+        const computer = gameInstance.computerPlayer();
+        // Level 0 earns nothing, and a player who is not signed in has no leaderboard entry.
+        if (gameInstance.gameType === GameType.Computer && computer?.computerLevel && userRef.current) {
+            tracker.begin(computer.computerLevel, humanMovedFirst(gameInstance.player1));
+        }
+        return () => tracker.end();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- only a new game round registers a new server game
+    }, [gameRound]);
+
+    const reportWin = async (level: number, moves: Move[]) => {
+        const outcome = await tracker.recordWin(level, movesForServer(moves));
+        switch (outcome.kind) {
+            case 'credited': {
+                const current = userRef.current;
+                if (current) {
+                    setUser(current.with({ computerPoints: outcome.total ?? current.computerPoints + outcome.points }));
+                }
+                addToast(outcome.points > 0 ? `Win verified: +${outcome.points} points` : 'Win verified');
+                break;
+            }
+            case 'legacy':
+                updateUserComputerScore(level);
+                break;
+            case 'refused':
+                addToast("This win could not be verified, so no points were added.");
+                break;
+            case 'failed':
+                addToast("Couldn't record your win. Check your connection.", [
+                    { label: 'Try again', callback: () => { void reportWin(level, moves); } },
+                ]);
+                break;
+            case 'untracked':
+                addToast("This game didn't count towards the leaderboard because you were offline when it started.");
+                break;
+        }
+    };
     
 
     const canResign = gameInstance.gameType === GameType.Online && !gameInstance.winner && !!user;
@@ -104,12 +153,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 if (gameInstance.gameType === GameType.Computer) {
                     const computerPlayer = gameInstance.computerPlayer();
                     if (computerPlayer && computerPlayer !== winnerPlayer && computerPlayer.computerLevel && userRef.current) {
-                        try {
-                            updateComputerScore(computerPlayer.computerLevel);
-                            updateUserComputerScore(computerPlayer.computerLevel);
-                        } catch {
-                            console.error("Could not update user's computer score")
-                        }
+                        void reportWin(computerPlayer.computerLevel, gameInstance.moves);
                     }
                 }
                 setWinnerDetails(winner);
@@ -321,6 +365,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 setComputerTurn(false);
                 const newGameInstance = resetGameInstance(gameInstance);
                 setGameInstance(newGameInstance);
+                setGameRound((round) => round + 1);
             }
         }
         addToast('Confirm Reset?', [toastAction]);
