@@ -5,6 +5,11 @@ import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PushService } from './PushService';
 
+// Push goes through Expo to Apple and Google. Android also needs a Firebase key (google-services.json plus an FCM key in
+// EAS) that has not been set up, so until it is the app neither asks for permission nor registers on Android: a prompt
+// for a feature that cannot work is worse than none. Add 'android' here when the Firebase setup exists.
+export const PUSH_PLATFORMS: string[] = ['ios'];
+
 const ASKED_KEY = 'pushPermissionAsked';
 const PUSH_TOKEN_KEY = 'pushToken';
 
@@ -25,6 +30,7 @@ Notifications.setNotificationHandler({
  * did not answer, and they can still turn notifications on in system settings.
  */
 export async function getPushToken(askIfNeeded: boolean): Promise<string | null> {
+    if (!PUSH_PLATFORMS.includes(Platform.OS)) return null;
     if (!Device.isDevice) return null;
 
     if (Platform.OS === 'android') {
