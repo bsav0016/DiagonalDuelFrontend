@@ -4,7 +4,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 
-const PRIVACY_POLICY_URL = "https://diagonaltwosquared.weebly.com/privacy-policy.html";
+const PRIVACY_POLICY_URL = "https://bsav0016.github.io/DiagonalDuelFrontend/privacy.html";
 
 export default function Support () {
     const openEmail = () => {
