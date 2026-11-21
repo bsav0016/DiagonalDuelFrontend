@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { gameIdFromNotificationData, getPushToken, isChallengeNotification, registerForPush, unregisterFromPush } from '../pushRegistration';
@@ -43,6 +44,17 @@ beforeEach(async () => {
 });
 
 describe('getPushToken', () => {
+    it('does nothing on Android until the Firebase setup exists: no prompt, no token', async () => {
+        const replaced = jest.replaceProperty(Platform, 'OS', 'android');
+        try {
+            await expect(getPushToken(true)).resolves.toBeNull();
+            expect(requestPermission).not.toHaveBeenCalled();
+            expect(expoToken).not.toHaveBeenCalled();
+        } finally {
+            replaced.restore();
+        }
+    });
+
     it('asks once at first sign-in and returns the token when granted', async () => {
         await expect(getPushToken(true)).resolves.toBe('ExponentPushToken[abc]');
         expect(requestPermission).toHaveBeenCalledTimes(1);
