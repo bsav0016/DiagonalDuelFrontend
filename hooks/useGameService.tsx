@@ -4,6 +4,8 @@ import { useToast } from "@/contexts/ToastContext";
 import { formatTime } from "@/lib/TimeFormatUtil";
 import { registerForPush } from "@/features/notifications/pushRegistration";
 import { ChallengeService } from "../features/challenges/ChallengeService";
+import { LeaderboardService } from "../features/leaderboard/LeaderboardService";
+import type { Cell } from "../features/game/computerScore";
 
 export function useGameService() {
     const { tokenRef, refreshTokenRef, userTokenWarnedRef, setToken, setUserTokenWarned, logout } = useAuth();
@@ -90,6 +92,30 @@ export function useGameService() {
         return await GameService.updateComputerScore(token, computerLevel);
     }
 
+    const startComputerGame = async (level: number, humanFirst: boolean) => {
+        const token = await getToken();
+        return await GameService.startComputerGame(token, level, humanFirst);
+    };
+
+    const finishComputerGame = async (gameId: number, moves: Cell[]) => {
+        const token = await getToken();
+        return await GameService.finishComputerGame(token, gameId, moves);
+    };
+
+    // The leaderboards are public; a signed-in player's token adds where they stand, even outside the listed top players.
+    // A token that cannot be used is not a reason to hide the leaderboard.
+    const getLeaderboards = async () => {
+        let token: string | undefined;
+        if (tokenRef.current) {
+            try {
+                token = await getToken();
+            } catch {
+                token = undefined;
+            }
+        }
+        return await LeaderboardService.getLeaderboards(token);
+    };
+
     const getChallenges = async () => {
         const token = await getToken();
         return await ChallengeService.list(token);
@@ -165,6 +191,9 @@ export function useGameService() {
         getMatchmaking,
         startMatchmaking,
         stopMatchmaking,
-        updateComputerScore
+        updateComputerScore,
+        getLeaderboards,
+        startComputerGame,
+        finishComputerGame
     };
 }

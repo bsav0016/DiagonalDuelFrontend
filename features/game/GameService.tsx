@@ -6,6 +6,7 @@ import { NetworkError } from "@/lib/networkRequests/NetworkError";
 import { MoveDTO } from "./dtos/MoveDTO";
 import { GameRecord, gameRecordFromData } from "./models/GameRecord";
 import { jwtDecode } from "jwt-decode";
+import type { Cell, FinishResult } from "./computerScore";
 
 // What the server says about the user's games: the ones to show, whether older finished ones exist,
 // and the win/loss/draw record over all of them.
@@ -186,6 +187,43 @@ export const GameService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    // Tells the server a computer game has started, so a win can be checked before it earns points. Resolves with
+    // the game's id. The server refuses a level outside 0 to 100 and answers 404 if it has no such endpoint yet.
+    async startComputerGame(token: string, level: number, humanFirst: boolean): Promise<number> {
+        const response = await networkRequest(
+            URL_EXT.COMPUTER_GAMES,
+            RequestMethod.POST,
+            { ...HEADERS(token).AUTH, ...HEADERS().JSON },
+            JSON.stringify({ level, human_first: humanFirst })
+        );
+        const id = response.data?.id;
+        if (typeof id !== 'number') {
+            throw new NetworkError("Couldn't start the computer game");
+        }
+        return id;
+    },
+
+    // Sends the moves of a won computer game. The server replays them and credits the points only if it was a legal
+    // game the player won. Sending the same game again is safe: it is never credited twice.
+    async finishComputerGame(token: string, gameId: number, moves: Cell[]): Promise<FinishResult> {
+        const response = await networkRequest(
+            `${URL_EXT.COMPUTER_GAMES}${gameId}/${URL_EXT.FINISH}`,
+            RequestMethod.POST,
+            { ...HEADERS(token).AUTH, ...HEADERS().JSON },
+            JSON.stringify({ moves })
+        );
+        const data = response.data ?? {};
+        if (typeof data.points_awarded !== 'number') {
+            throw new NetworkError("Couldn't read the computer game result");
+        }
+        return {
+            pointsAwarded: data.points_awarded,
+            total: typeof data.computer_points === 'number' ? data.computer_points : null,
+            alreadyFinished: data.already_finished === true,
+            capped: data.capped === true,
+        };
     },
 
     async updateComputerScore(token: string, computerLevel: number): Promise<void> {
