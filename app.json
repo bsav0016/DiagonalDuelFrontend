@@ -20,6 +20,7 @@
       "bundleIdentifier": "com.BrianSavidgeApps.Diagonal-Two-Squared"
     },
     "android": {
+      "package": "com.briansavidgeapps.diagonalduel",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundImage": "./assets/images/adaptive-icon-background.png",
