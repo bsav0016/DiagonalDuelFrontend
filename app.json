@@ -45,7 +45,8 @@
         }
       ],
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/withOptionalPortrait"
     ],
     "experiments": {
       "typedRoutes": true
