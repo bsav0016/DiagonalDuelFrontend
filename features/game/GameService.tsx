@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import { networkRequest } from "@/lib/networkRequests/NetworkRequest";
 import { Game } from "./models/Game";
 import { RequestMethod } from "@/lib/networkRequests/RequestMethod";
@@ -32,7 +33,7 @@ export const GameService = {
                 return null
             }
         } catch (error) {
-            console.error("Error decoding token:", error);
+            report(error, { where: 'decode token' });
             return 0;
         }
     },
@@ -58,7 +59,7 @@ export const GameService = {
                 throw new NetworkError("Failed to refresh token");
             }
         } catch (error) {
-            console.error("Error refreshing token:", error);
+            report(error, { where: 'refresh token' });
             throw new NetworkError("Could not refresh token");
         }
     },

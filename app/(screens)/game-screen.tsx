@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
@@ -216,7 +217,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                         setHeader("Player wins by default!")
                     }
                 } catch (error) {
-                    console.error(error);
+                    report(error, { where: 'computer move' });
                     addToast("Unexpected error. Please restart game.")
                 } finally {
                     setIsComputerProcessing(false);
@@ -299,7 +300,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
                 await pollUserGames();
                 routeBack();
             } catch (error) {
-                console.error(error);
+                report(error, { where: 'make move' });
                 addToast("Network error while making move")
             } finally {
                 setLoading(false);
@@ -329,7 +330,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
             await pollUserGames();
             routeBack();
         } catch (error) {
-            console.error(error);
+            report(error, { where: 'resign' });
             addToast("Could not resign. The game may already be over, or you are offline.");
             // The server may have moved on (a timeout, or the opponent's move), so show the latest.
             pollUserGames().catch(() => {});
@@ -382,7 +383,7 @@ function GameScreenContent ({ parsedGame }: { parsedGame: any }) {
     const onPressYes = () => {
         if (!selectedMove) {
             addToast('Internal error occurred');
-            console.error('Selected move not set before confirm move');
+            report(new Error('Selected move not set before confirm move'), { where: 'confirm move' });
             return;
         }
         executeMove(selectedMove.row, selectedMove.column)

@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -63,7 +64,7 @@ export async function registerForPush(accessToken: string, askIfNeeded: boolean)
         await PushService.registerDevice(accessToken, pushToken, Platform.OS);
         await AsyncStorage.setItem(PUSH_TOKEN_KEY, pushToken);
     } catch (error) {
-        console.warn('Could not register for push notifications', error);
+        report(error, { where: 'register for push' });
     }
 }
 
@@ -75,7 +76,7 @@ export async function unregisterFromPush(accessToken: string): Promise<void> {
         await AsyncStorage.removeItem(PUSH_TOKEN_KEY);
         await PushService.unregisterDevice(accessToken, pushToken);
     } catch (error) {
-        console.warn('Could not unregister from push notifications', error);
+        report(error, { where: 'unregister from push' });
     }
 }
 

@@ -49,7 +49,6 @@ export function useGameService() {
         }
         if (!refreshTokenRef.current || GameService.isTokenExpiring(refreshTokenRef.current, 0)) {
             logout();
-            console.error('No refresh token');
             throw new Error('No refresh token');
         }
         const { newToken } = await GameService.refreshToken(refreshTokenRef.current);

@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 import { StyleSheet, TouchableOpacity, ScrollView, View, Text } from "react-native";
@@ -76,7 +77,7 @@ export default function PlayOnline () {
             setIncomingChallenges(challenges.incoming);
             setOutgoingChallenges(challenges.outgoing);
         } catch (error) {
-            console.error("Error fetching challenges:", error);
+            report(error, { where: 'challenges list' });
         }
     }, []);
 
