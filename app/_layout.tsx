@@ -9,9 +9,13 @@ import 'react-native-reanimated';
 import { ErrorScreen } from '@/components/ErrorScreen';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { installGlobalErrorHandler } from '@/lib/errorReporting';
+import { initErrorReporting } from '@/lib/sentry';
 
 SplashScreen.preventAutoHideAsync();
-installGlobalErrorHandler();
+// Sentry brings its own handler for uncaught errors; without it (no DSN, development) ours reports to the console.
+if (!initErrorReporting()) {
+  installGlobalErrorHandler();
+}
 
 // expo-router shows this instead of a blank screen when any screen fails to draw.
 export function ErrorBoundary(props: ErrorBoundaryProps) {
