@@ -24,8 +24,14 @@ Most board games need two people in the same room at the same time. Diagonal Due
 
 ## Stack
 
-- React Native 0.76 / Expo SDK 52, TypeScript, Expo Router
+- React Native 0.88 / Expo SDK 58, TypeScript, Expo Router, over-the-air updates (EAS Update) and error reporting (Sentry)
 - Talks to a Django REST API (private repository) for accounts, matchmaking, game state and leaderboards
+
+## Error reporting and privacy
+
+Problems that nobody would otherwise see are reported through one function, `report(error, { where })` in `lib/errorReporting.ts`; the old `console.error` calls all go through it. Offline, a server answer in the 400s and a sign-in that has run out are expected and not reported; everything else is. A screen that fails to draw shows a "Something went wrong" page with a Try again button instead of a blank screen (the root layout's `ErrorBoundary`).
+
+Reports go to Sentry (`lib/sentry.ts`) only in a release build that has `EXPO_PUBLIC_SENTRY_DSN` set; in development, and without the variable, errors print to the console. Each report carries the app version, the over-the-air update it runs (`update_id`) and its channel, so a bad update shows up as its own group. Before anything is sent (`lib/sentryScrub.ts`) the user, request data, headers, cookies and console lines are removed, and invite codes are masked; no screenshots, no tracing. The privacy policy page (`site/privacy.html`) says so. To check a build end to end, press and hold "Thank you for playing Diagonal Duel!" on the Support screen: it sends one test report.
 
 ## How the computer opponent works
 

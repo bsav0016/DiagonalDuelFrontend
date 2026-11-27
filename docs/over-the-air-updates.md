@@ -36,6 +36,10 @@ This value is read by the native build, so it only takes effect in builds made a
 
 You need `npx eas-cli login` (the Expo account that owns the project) first.
 
+## After you publish
+
+Open the project in Sentry and look at the Issues for the new `update_id` tag (or release `diagonal-duel@<version>`). New error groups that only appear on the new update id are the signal to roll back. Reports only exist for builds made with the Sentry module (app version 3.3.0 and later) and with `EXPO_PUBLIC_SENTRY_DSN` set.
+
 ## Rolling back
 
 1. `npx eas-cli update:list --branch production --limit 5` shows the update group ids.
@@ -46,6 +50,6 @@ A rollback cannot recall an update from phones that already applied it and never
 
 ## Notes
 
-- Updates are published with the EAS environment named after the channel (`--environment production`). The app reads `EXPO_PUBLIC_API_URL` only to point at another backend, and the production EAS environment has no variables, so updates use the default production backend, the same as store builds. If you ever add `EXPO_PUBLIC_*` variables to a build, add them to the EAS environments too (`npx eas-cli env:create`), or a published update would be bundled without them.
+- Updates are published with the EAS environment named after the channel (`--environment production`). The app reads `EXPO_PUBLIC_API_URL` only to point at another backend, and `EXPO_PUBLIC_SENTRY_DSN` to send error reports, so set the DSN in the production and preview EAS environments (`npx eas-cli env:create`) or updates are bundled without reporting. Leave `EXPO_PUBLIC_API_URL` out of the environments and updates use the default production backend, the same as store builds. If you ever add `EXPO_PUBLIC_*` variables to a build, add them to the EAS environments too (`npx eas-cli env:create`), or a published update would be bundled without them.
 - Check Apple's and Google's current rules on over-the-air updates before relying on them for anything beyond fixing JavaScript and assets.
 - `app.json` lists only `ios` and `android` under `platforms`. `eas update` exports every listed platform, and this app's web export does not build, so without that line a publish fails before sending anything. Remove it only if the web version is made to work.
