@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import { RequestMethod } from "@/lib/networkRequests/RequestMethod";
 import { LoginDTO } from "@/features/auth/dtos/LoginDTO";
 import { HEADERS, URL_EXT } from "@/lib/networkRequests/NetworkConstants";
@@ -60,7 +61,7 @@ export const AuthService = {
             );
             return true;
         } catch (error) {
-            console.error("Error during logout:", error);
+            report(error, { where: 'logout' });
             throw(error);
         }
     },

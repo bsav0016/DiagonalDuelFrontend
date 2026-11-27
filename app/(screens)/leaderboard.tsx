@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import { CustomHeaderView } from "@/components/CustomHeaderView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -39,7 +40,7 @@ export default function Leaderboard() {
                 setServerComputerLeader(computerPointsMe);
                 setServerRatingLeader(onlineRatingMe);
             } catch (error) {
-                console.error(error);
+                report(error, { where: 'leaderboard' });
                 addToast("Could not get leaderboard");
                 routeBack();
             } finally {

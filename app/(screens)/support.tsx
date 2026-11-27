@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import React from "react";
 import { StyleSheet, Linking, TouchableOpacity } from "react-native";
 import { ThemedView } from "@/components/ThemedView";
@@ -12,13 +13,13 @@ export default function Support () {
         const subject = "Feedback for Diagonal Duel";
         const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
         Linking.openURL(mailto).catch((err) =>
-            console.error("Failed to open mail app", err)
+            report(err, { where: 'open mail app' })
         );
     };
 
     const openPrivacyPolicy = () => {
         Linking.openURL(PRIVACY_POLICY_URL).catch((err) =>
-            console.error("Failed to open privacy policy", err)
+            report(err, { where: 'open privacy policy' })
         );
     };
 

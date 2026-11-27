@@ -1,3 +1,4 @@
+import { report } from '@/lib/errorReporting';
 import React, { createContext, useContext, useEffect, useRef, ReactNode } from "react";
 import { useUser } from "@/contexts/UserContext";
 import { useLoading } from "./LoadingContext";
@@ -69,7 +70,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
         addToast("It has been over 30 days since you've been active. You must login again.");
         logout();
       }
-      console.error("Error fetching user games:", error);
+      report(error, { where: 'games poll' });
     }
   };
 
@@ -89,7 +90,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
         await pollUserGames();
       }
     } catch (error) {
-      console.error("Error fetching matchmaking: ", error);
+      report(error, { where: 'matchmaking poll' });
       if (error instanceof Error && error.message === "Refresh token expired") {
         addToast("It has been over 30 days since you've been active. You must login again.");
         logout();
@@ -134,7 +135,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
         updateMatchmaking(updatedMatchmaking);
       }
     } catch (error) {
-      console.error("Error creating matchmaking: ", error);
+      report(error, { where: 'join matchmaking' });
     } finally {
       setLoading(false);
     }
@@ -150,7 +151,7 @@ export const GamePollProvider: React.FC<{ children: ReactNode }> = ({ children }
       const updatedMatchmaking = userRef.current.matchmaking.filter(item => item !== days);
       updateMatchmaking(updatedMatchmaking);
     } catch (error) {
-      console.error("Error cancelling matchmaking: ", error);
+      report(error, { where: 'leave matchmaking' });
     } finally {
       setLoading(false);
     }
