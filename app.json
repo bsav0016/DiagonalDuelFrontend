@@ -2,7 +2,7 @@
   "expo": {
     "name": "Diagonal Duel",
     "slug": "DiagonalDuelFrontend",
-    "version": "3.2.0",
+    "version": "3.3.0",
     "platforms": [
       "ios",
       "android"
@@ -45,7 +45,8 @@
         }
       ],
       "expo-status-bar",
-      "expo-web-browser"
+      "expo-web-browser",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

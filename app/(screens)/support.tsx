@@ -1,6 +1,7 @@
 import { report } from '@/lib/errorReporting';
 import React from "react";
-import { StyleSheet, Linking, TouchableOpacity } from "react-native";
+import { Alert, StyleSheet, Linking, TouchableOpacity } from "react-native";
+import { sendTestReport } from "@/lib/sentry";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { CustomHeaderView } from "@/components/CustomHeaderView";
@@ -23,10 +24,15 @@ export default function Support () {
         );
     };
 
+    // Press and hold the thank-you line to send one harmless test report, to check error reporting from an installed build.
+    const sendTest = () => {
+        Alert.alert(sendTestReport() ? "Test report sent" : "Error reporting is not on in this build");
+    };
+
     return (
         <CustomHeaderView header="Support">
             <ThemedView style={styles.playComputerView}>
-                <ThemedText style={styles.thankYouText}>
+                <ThemedText style={styles.thankYouText} onLongPress={sendTest}>
                     Thank you for playing Diagonal Duel!
                 </ThemedText>
                 <ThemedText>
